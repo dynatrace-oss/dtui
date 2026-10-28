@@ -55,12 +55,13 @@ the result (`make third-party-licenses`) whenever `go.mod` changes. The
 files differ, so dependency bumps cannot ship stale notices.
 
 - A module that ships no license file needs its text in
-  `third_party/supplemental/<module>/`; the script fails otherwise.
-  `github.com/mattn/go-localereader` (windows only) has no `LICENSE` in the
-  pinned `v0.0.1`. Its README at that tag says MIT, and the author added the
-  MIT text (`Copyright (c) 2022 Yasuhiro Matsumoto`) to `master` later, which
-  is what the supplemental file contains. The Go standard library's license
-  is supplemental too, taken from the `go` tag matching `go.mod`.
+  `third_party/supplemental/<module>/`; the script fails otherwise. Today
+  only the Go standard library needs one: toolchain distributions do not all
+  ship Go's license, so it is taken from the `go` tag matching `go.mod`.
+- `github.com/mattn/go-localereader` (windows only, via bubbletea) is pinned in
+  `go.mod` to an upstream revision that contains its MIT `LICENSE`.
+  Its only change since `v0.0.1`, which had none, is that file, so the code is
+  identical. Drop the pin once an upstream release includes the license.
 - dtctl's own `NOTICE` lists dtctl's dependencies, not dtui's. Only its
   leading attribution is carried over, in the root `NOTICE`.
 - The Chrome extension and the wasm build are not part of the release archives.
