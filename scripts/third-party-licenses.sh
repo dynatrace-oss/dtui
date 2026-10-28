@@ -9,6 +9,8 @@
 # ships no license file must have one in third_party/supplemental/ (with the
 # provenance recorded in docs/dev/releasing.md), otherwise this script fails.
 set -euo pipefail
+# Same ordering locally and in CI, so the committed output can be diffed.
+export LC_ALL=C
 
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 out="$repo/third_party"
@@ -24,17 +26,17 @@ trap 'rm -rf "$work"' EXIT
 for target in "${targets[@]}"; do
   CGO_ENABLED=0 GOOS="${target%/*}" GOARCH="${target#*/}" \
     go list -deps -f '{{with .Module}}{{.Path}} {{.Version}}{{end}}' . |
-    sort -u | rg -v '^$' | rg -v "^$self " |
+    sort -u | grep -v '^$' | grep -v "^$self " |
     sed "s|\$| ${target}|" >>"$work/rows"
 done
 
 # classify <file> prints the SPDX ids whose canonical text appears in the file.
 classify() {
   local file="$1"
-  rg -q 'Apache License' "$file" && rg -q 'Version 2.0' "$file" && echo "Apache-2.0"
-  rg -q 'Permission is hereby granted, free of charge' "$file" && echo "MIT"
-  if rg -q 'Redistribution and use in source and binary forms' "$file"; then
-    if rg -q 'Neither the name' "$file"; then echo "BSD-3-Clause"; else echo "BSD-2-Clause"; fi
+  grep -q 'Apache License' "$file" && grep -q 'Version 2.0' "$file" && echo "Apache-2.0"
+  grep -q 'Permission is hereby granted, free of charge' "$file" && echo "MIT"
+  if grep -q 'Redistribution and use in source and binary forms' "$file"; then
+    if grep -q 'Neither the name' "$file"; then echo "BSD-3-Clause"; else echo "BSD-2-Clause"; fi
   fi
   return 0
 }
@@ -42,7 +44,7 @@ classify() {
 license_dir() {
   local module="$1" version="$2" dir
   dir="$(go list -m -f '{{.Dir}}' "$module@$version" 2>/dev/null || go list -m -f '{{.Dir}}' "$module")"
-  if ls "$dir" | rg -qi '^(licen[cs]e|copying|notice)'; then echo "$dir"; return; fi
+  if ls "$dir" | grep -Eqi '^(licen[cs]e|copying|notice)'; then echo "$dir"; return; fi
   [ -d "$out/supplemental/$module" ] || { echo "no license file for $module@$version and no supplemental text" >&2; exit 1; }
   echo "$out/supplemental/$module"
 }
@@ -80,7 +82,7 @@ awk '{print $1" "$2}' "$work/rows" | sort -u | while read -r module version; do
   files=()
   for f in "$dir"/*; do
     name="$(basename "$f")"
-    echo "$name" | rg -qi '^(licen[cs]e|copying|notice)' || continue
+    echo "$name" | grep -Eqi '^(licen[cs]e|copying|notice)' || continue
     [ -f "$f" ] || continue
     # dtctl's NOTICE lists dtctl's own (mostly unrelated) dependencies; only its
     # leading attribution applies to dtui and is reproduced in the root NOTICE.
@@ -88,10 +90,10 @@ awk '{print $1" "$2}' "$work/rows" | sort -u | while read -r module version; do
     files+=("$f")
     ids="$ids $(classify "$f")"
   done
-  license="$(echo "$ids" | tr ' ' '\n' | rg -v '^$' | sort -u | paste -sd'|' - | sed 's/|/ AND /g')"
+  license="$(echo "$ids" | tr ' ' '\n' | grep -v '^$' | sort -u | paste -sd'|' - | sed 's/|/ AND /g')"
   [ -n "$license" ] || { echo "could not classify license of $module@$version" >&2; exit 1; }
   append_texts "$module" "$version" "$license" "${files[@]}"
-  covering="$(rg "^$module $version " "$work/rows" | awk '{print $3}' | paste -sd' ' -)"
+  covering="$(grep "^$module $version " "$work/rows" | awk '{print $3}' | paste -sd' ' -)"
   echo "$module,$version,$license,$covering" >>"$csv"
 done
 
