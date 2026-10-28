@@ -21,3 +21,4 @@ extension/wasm_exec.js
 
 # Playwright MCP scratch (page snapshots, console logs)
 .playwright-mcp/
+completions/
