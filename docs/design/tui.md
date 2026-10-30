@@ -351,10 +351,22 @@ error suggesting non-interactive equivalents.
 
 ### Home view (`:home`, default)
 
-A triage landing page, echoing `dt-health-check` / `dt-daily-standup`: active
-problems by severity, unhealthy-SLO count, top services by error rate, recent
-deployment events, failing workflow executions. Panels load independently
-(spinner per panel); `enter` on a panel opens the full view.
+A triage landing page with six panels:
+
+- active problems (24h)
+- failing services, ranked by failed span count in the selected timeframe
+- Kubernetes warnings (24h)
+- frontend errors (24h)
+- open vulnerabilities (24h)
+- attack detections (24h)
+
+Panels load independently, each with its own spinner and error state. `tab`
+and `shift+tab` move between panels; `j`/`k` or the arrow keys select rows.
+`enter` on a row opens the corresponding filtered view or entity detail.
+Kubernetes warning, frontend error, and attack detection drill-downs use at
+least a 24h window, retaining a longer selected timeframe. Failing services
+use the selected timeframe; problem and vulnerability list drill-downs also
+retain it.
 
 ### The DQL escape hatch (`:query` / `ctrl-q`)
 
@@ -955,7 +967,6 @@ Where this document describes something the code does not yet do, it is one of:
   carry data).
 - **Logs live-follow toggle**: auto-refresh (`R`) already re-queries; missing is
   a logs-specific follow UX (pin to newest, follow indicator).
-- **Home**: a recent-changes panel (the change-event query exists).
 - **Blocked on data**: `:costs` / `:dps`, mobile apps, Azure/GCP inventories.
 - **Smartscape navigator phase 3**: expand-in-place, visited-nodes minimap, trail
   yank, schema-cell drill (see `smartscape-navigator.md`).
