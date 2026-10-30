@@ -363,10 +363,10 @@ A triage landing page with six panels:
 Panels load independently, each with its own spinner and error state. `tab`
 and `shift+tab` move between panels; `j`/`k` or the arrow keys select rows.
 `enter` on a row opens the corresponding filtered view or entity detail.
-Kubernetes warning, frontend error, and attack detection drill-downs use at
-least a 24h window, retaining a longer selected timeframe. Failing services
-use the selected timeframe; problem and vulnerability list drill-downs also
-retain it.
+Active problem, Kubernetes warning, frontend error, and attack detection
+drill-downs use at least a 24h window, retaining a longer selected timeframe.
+Failing services and vulnerability list drill-downs retain the selected
+timeframe.
 
 ### The DQL escape hatch (`:query` / `ctrl-q`)
 
