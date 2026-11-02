@@ -470,8 +470,14 @@ func (v *tableView) setFilter(f string) {
 }
 
 func (v *tableView) Echo() string {
-	if v.spec.API != "" && v.spec.Echo != nil {
-		return v.spec.Echo(v.scope, v.dql)
+	// A dedicated DQL-view command knows only the Scope; once searches,
+	// facets or segments narrow the list, only the composed query is
+	// equivalent to what is shown.
+	narrowed := v.spec.API == "" && len(v.searches)+len(v.facets)+len(v.ds.segments) > 0
+	if v.spec.Echo != nil && !narrowed {
+		if echo := v.spec.Echo(v.scope, v.dql); echo != "" || v.spec.API != "" {
+			return echo
+		}
 	}
 	if v.dql == "" {
 		return ""
@@ -651,6 +657,9 @@ func (v *tableView) Update(msg tea.Msg) tea.Cmd {
 		v.err = msg.err
 		if msg.err == nil {
 			v.all = msg.records
+			if v.spec.Decode != nil {
+				v.all = v.spec.Decode(v.all)
+			}
 			// Stamp any warm derived fields (e.g. resolved Azure subscription
 			// names) in place — no-op when a cache is cold or no row matches; the
 			// derivedOwner broadcast re-enriches once a lookup lands.
@@ -871,7 +880,12 @@ func (v *tableView) handleKey(msg tea.KeyMsg) tea.Cmd {
 				} else if e := v.entityOf(rec); e != nil {
 					scope.Entity = e
 				}
-				return func() tea.Msg { return pushViewMsg{spec: target, scope: scope} }
+				msg := pushViewMsg{spec: target, scope: scope}
+				if v.spec.EnterInheritsScope {
+					msg.scope.Entity, msg.scope.Entities = v.scope.Entity, v.scope.Entities
+					msg.searches, msg.facets = v.searches, v.facets
+				}
+				return func() tea.Msg { return msg }
 			}
 		}
 		// Entity rows open the tabbed detail page; signal rows (logs,
