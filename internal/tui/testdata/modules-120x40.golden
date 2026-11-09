@@ -1,12 +1,12 @@
  ▛▞▟ dtui  ·  context:test  ·  ● readonly                                                                       last 2h
  modules ──────────────────────────────────────────────────────────────────────────────────────────────────────────────
  5 rows · 1s                                                          │ Apache Tomcat orders-api
- HOST  NAMESPACE  MODULE    TECH  HEALTH  VERSION  INJECT  MODULE ID  │
-▌ip-…             Apache …  java  Criti…  1.325.…  full    8f2c1e0a…… │  timestamp: 11:49:54
- ip-…             Apache …  java  Criti…  1.325.…  full    8f2c1e0a…… │  host.name: ip-10-0-1-17
- aks…  checkout   SpringB…  java  Healt…  1.327.…  runti…  1a2b3c4d…… │
- aks…  checkout   node st…  nod…  Healt…  1.327.…  runti…  1a2b3c4d…… │
- win…             IIS app…  dot…  Warni…  1.321.…  full    9d8c7b6a…… │
+ HOST  NAMESPACE  MODULE    TECH  HEALTH  VERSION  INJECT  LD   MODUL │
+▌ip-…             Apache …  java  Criti…  1.325.…  full    on   8f2c… │  timestamp: 11:49:54
+ ip-…             Apache …  java  Criti…  1.325.…  full    on   8f2c… │  host.name: ip-10-0-1-17
+ aks…  checkout   SpringB…  java  Healt…  1.327.…  runti…  on   1a2b… │
+ aks…  checkout   node st…  nod…  Healt…  1.327.…  runti…  off  1a2b… │
+ win…             IIS app…  dot…  Warni…  1.321.…  full         9d8c… │
 
 
 

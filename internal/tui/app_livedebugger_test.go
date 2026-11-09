@@ -13,6 +13,7 @@ import (
 // the snapshot rows render decoded, and c echoes the dtctl read command.
 func TestBreakpointEnterOpensSnapshots(t *testing.T) {
 	a := testApp(t, "breakpoints")
+	disablePreview(a)
 	seedRows(t, a, []map[string]any{{
 		"breakpoint.id":    "bp-0001",
 		"code.filepath":    "org/example/OrderController.java",

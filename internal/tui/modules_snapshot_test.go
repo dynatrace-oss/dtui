@@ -4,7 +4,7 @@ import "testing"
 
 // Modules mirror the fleetModulesQuery summarize over ONEAGENT_METADATA
 // FLEET_EVENTs: host, optional k8s namespace, module name/type/version/
-// health/injection mode/id, and the latest timestamp (SEEN).
+// health/injection mode/id, the Live Debugger flag (LD), and the latest timestamp (SEEN).
 func TestSnapshotModulesTable(t *testing.T) {
 	pinSnapshotClock(t)
 
@@ -29,6 +29,10 @@ func TestSnapshotModulesTable(t *testing.T) {
 		mod("aks-user-27182-vmss00000a", "checkout", "SpringBoot cart-api", "java", "Healthy", "1.327.12.20260108-093312", "runtime", "1a2b3c4d5e6f7081", "2026-07-15T11:49:39.103000000Z"),
 		mod("aks-user-27182-vmss00000a", "checkout", "node storefront-web", "nodejs", "Healthy", "1.327.12.20260108-093312", "runtime", "1a2b3c4d5e6f7082", "2026-07-15T11:48:12.554000000Z"),
 		mod("win-build-agent-07", "", "IIS app pool DefaultAppPool", "dotnet", "Warning", "1.321.30.20250911-120501", "full", "9d8c7b6a59483726", "2026-07-15T11:41:02.000000000Z"),
+	}
+
+	for i, ld := range []string{"true", "true", "true", "false"} {
+		rows[i]["dt.agent.live_debugger.enabled"] = ld
 	}
 
 	a := testApp(t, "modules")

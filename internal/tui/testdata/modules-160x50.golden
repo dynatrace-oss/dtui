@@ -1,12 +1,12 @@
  ▛▞▟ dtui  ·  context:test  ·  ● readonly                                                                                                               last 2h
  modules ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
  5 rows · 1s                                                                                                  │ Apache Tomcat orders-api
- HOST                NAMESPACE      MODULE       TECH    HEALTH   VERSION         INJECT  MODULE ID      SEEN │
-▌ip-10-0-1-17                       Apache Tom…  java    Critic…  1.325.47.2025…  full    8f2c1e0a9b7d…   10m │  timestamp: 11:49:54
- ip-10-0-1-17                       Apache Tom…  java    Critic…  1.325.47.2025…  full    8f2c1e0a9b7d…   10m │  host.name: ip-10-0-1-17
- aks-user-27182-vm…  checkout       SpringBoot…  java    Healthy  1.327.12.2026…  runti…  1a2b3c4d5e6f…   10m │
- aks-user-27182-vm…  checkout       node store…  nodejs  Healthy  1.327.12.2026…  runti…  1a2b3c4d5e6f…   11m │
- win-build-agent-07                 IIS app po…  dotnet  Warning  1.321.30.2025…  full    9d8c7b6a5948…   18m │
+ HOST               NAMESPACE     MODULE     TECH    HEALTH   VERSION         INJECT  LD   MODULE ID     SEEN │
+▌ip-10-0-1-17                     Apache T…  java    Critic…  1.325.47.2025…  full    on   8f2c1e0a9b7…   10m │  timestamp: 11:49:54
+ ip-10-0-1-17                     Apache T…  java    Critic…  1.325.47.2025…  full    on   8f2c1e0a9b7…   10m │  host.name: ip-10-0-1-17
+ aks-user-27182-v…  checkout      SpringBo…  java    Healthy  1.327.12.2026…  runti…  on   1a2b3c4d5e6…   10m │
+ aks-user-27182-v…  checkout      node sto…  nodejs  Healthy  1.327.12.2026…  runti…  off  1a2b3c4d5e6…   11m │
+ win-build-agent-…                IIS app …  dotnet  Warning  1.321.30.2025…  full         9d8c7b6a594…   18m │
 
 
 
