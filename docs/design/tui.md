@@ -164,6 +164,8 @@ unbounded). Opened via drill-down they inherit the selection's scope.
 | Security | `:security`, `:vulns` | `security.events` | vulnerabilities: DSS score + Davis badges (exposure/exploit/fix), open·muted·all lenses, entity pins; enter → tabbed page (overview · entities · attacks · entry points · timeline · details), markdown description via glamour |
 | Attacks | `:attacks`, `:rap` | `security.events` | Runtime Application Protection detections: Blocked/Audited verdicts, payloads, source IPs, `s` → trace waterfall, entity drills |
 | RUM sessions | `:sessions` | `user.sessions` | per-app user sessions, duration, errors; session detail = action timeline |
+| Live Debugger breakpoints | `:breakpoints`, `:bp` | `application.snapshots` | breakpoints that *fired* in the timeframe, derived from their snapshots (location, function, hits, hosts, last hit); enter → that breakpoint's snapshots. Configuration and rollout status are not shown — the workspace lookup can create a workspace, and breakpoint writes stay in `dtctl` |
+| Live Debugger snapshots | `:snapshots`, `:snap` | `application.snapshots` | newest-first hit stream; payloads decoded with dtctl's decoder — the inspector shows `variables` (the hit frame's locals) and `stacktrace` first; `c` copies `dtctl get snapshots <id> --decode-snapshots`; entity/logs/events/trace drills |
 | Costs | `:costs`, `:dps` | `dt.system.events` | DPS consumption by capability/entity, trend |
 
 ### Management views (assets — secondary)
