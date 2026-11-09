@@ -4,16 +4,30 @@ name: pr-title
 # version from it. A title that is not a conventional commit is silently ignored
 # by release-please, so it is rejected here instead.
 #
-# pull_request_target only to get a token that can read fork PRs; this workflow
-# never checks out or runs PR code.
+# pull_request: release-please opens its PR with GITHUB_TOKEN; those events start
+# pull_request workflows (same as ci) but not pull_request_target, so without this
+# the required "Conventional PR title" check never reports and blocks the merge.
+# pull_request_target: kept so fork PRs still validate, and so a title edit on an
+# already-open release PR can still re-run the check from the base-branch workflow.
+# This workflow never checks out or runs PR code.
 
 on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
   pull_request_target:
     types:
       - opened
       - edited
       - reopened
       - synchronize
+
+concurrency:
+  group: conventional-pr-title-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 permissions: {}
 
