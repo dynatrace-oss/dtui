@@ -4,7 +4,8 @@ dtctl-tui
 *.test
 .obsidian/
 .dtui.yaml
-.claude/
+.claude/*
+!.claude/skills
 
 # mac
 .DS_Store
