@@ -2,7 +2,8 @@
 
 User-facing docs (install, configuration, the workspace file) live in the
 top-level [README](../README.md); press `?` inside the TUI for the key
-reference. This directory is for design and contributor documentation.
+reference. This directory is for design and contributor documentation. AI agents
+start at [AGENTS.md](../AGENTS.md).
 
 ## Layout
 
@@ -14,11 +15,16 @@ reference. This directory is for design and contributor documentation.
   - [smartscape-navigator.md](design/smartscape-navigator.md) — the
     topology navigator (`:nav`)
 - **[dev/](dev/)** — contributor notes
+  - [architecture.md](dev/architecture.md) — how the packages fit: dtctl,
+    the catalog, the TUI shell, runtime discovery, the workspace file
+  - [testing.md](dev/testing.md) — test conventions and layout snapshots
+  - [tech-debt.md](dev/tech-debt.md) — known shortcuts and duplication
   - [learnings.md](dev/learnings.md) — field notes: live-validated
     DQL/Grail facts, the view extension model, bubbletea patterns, how to
     verify the TUI
   - [phases.md](dev/phases.md) — the phase-by-phase shipped log
   - [releasing.md](dev/releasing.md) — how a release is cut, verified and recovered
+- **[plans/](plans/)** — plans for work that spans several PRs
 - **[adr/](adr/)** — architecture decision records: the load-bearing
   decisions and why they were made
 
