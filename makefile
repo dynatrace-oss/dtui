@@ -13,6 +13,7 @@ INSTALL_BIN_DIR ?= $(if $(GOBIN),$(GOBIN),$(shell go env GOPATH)/bin)
 GREMLINS ?= go run github.com/go-gremlins/gremlins/cmd/gremlins@v0.6.0
 MUTATION_BASE ?= origin/main
 MUTATION_THRESHOLD ?= 80
+MUTATION_MIN_JUDGED ?= 10
 
 all: build
 
@@ -58,10 +59,11 @@ mutation:
 	@scripts/mutation-report.sh mutation.json
 
 # Mutation testing over lines changed since MUTATION_BASE; fails below
-# MUTATION_THRESHOLD percent efficacy.
+# MUTATION_THRESHOLD percent efficacy once at least MUTATION_MIN_JUDGED
+# mutants were judged.
 mutation-diff:
 	@$(GREMLINS) unleash -S lt --diff $(MUTATION_BASE) -o mutation.json .
-	@scripts/mutation-report.sh mutation.json $(MUTATION_THRESHOLD)
+	@scripts/mutation-report.sh mutation.json $(MUTATION_THRESHOLD) $(MUTATION_MIN_JUDGED)
 
 vet:
 	@go vet ./...

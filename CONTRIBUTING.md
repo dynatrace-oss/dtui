@@ -57,7 +57,8 @@ make mutation       # the whole module (slow; CI runs it weekly)
 ```
 
 PRs fail below 80% efficacy (killed ÷ (killed + lived)) on the changed
-lines. To fix a lived mutant, add a test that asserts the behavior the line
+lines once at least 10 mutants were judged; below that, one equivalent
+mutant would decide the result, so small diffs only report. To fix a lived mutant, add a test that asserts the behavior the line
 decides (a whole ordered result, a boundary, the case that must be
 excluded); a test that only executes the line will not kill it. Some
 mutants are *equivalent*, meaning the change has no observable effect

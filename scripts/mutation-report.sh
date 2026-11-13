@@ -2,17 +2,19 @@
 # Summarizes a gremlins JSON report (gremlins unleash -o <file>) as Markdown
 # and enforces an efficacy threshold.
 #
-#   scripts/mutation-report.sh <report.json> [min-efficacy-percent]
+#   scripts/mutation-report.sh <report.json> [min-efficacy-percent] [min-judged]
 #
 # Efficacy = killed / (killed + lived): of the mutants a test executes, how
 # many make a test fail. A LIVED mutant is a logic change the suite does not
-# notice. The threshold only applies when there is something to judge (at
-# least one killed or lived mutant), so a docs-only diff passes. The summary
+# notice. The threshold only applies once at least min-judged mutants
+# (killed + lived, default 1) were judged: on a tiny diff one equivalent
+# mutant would otherwise decide the result, and a docs-only diff has none. The summary
 # is appended to $GITHUB_STEP_SUMMARY when set (GitHub Actions).
 set -euo pipefail
 
 report="${1:?usage: mutation-report.sh <report.json> [min-efficacy]}"
 threshold="${2:-0}"
+min_judged="${3:-1}"
 
 summary="$(jq -r '
   "## Mutation testing\n",
@@ -37,7 +39,11 @@ fi
 
 judged="$(jq '.mutants_killed + .mutants_lived' "$report")"
 efficacy="$(jq '.test_efficacy' "$report")"
-if (( judged > 0 )) && awk -v e="$efficacy" -v t="$threshold" 'BEGIN { exit !(e < t) }'; then
+if (( judged < min_judged )); then
+  echo "Only ${judged} judged mutant(s), fewer than ${min_judged}: threshold not applied."
+  exit 0
+fi
+if awk -v e="$efficacy" -v t="$threshold" 'BEGIN { exit !(e < t) }'; then
   echo "Mutation efficacy ${efficacy}% is below the ${threshold}% threshold." >&2
   exit 1
 fi
