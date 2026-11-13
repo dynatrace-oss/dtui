@@ -28,7 +28,7 @@ renders. Write a bespoke screen only with an ADR (ADR-0001, ADR-0003).
 6. **Register** the spec in the `specs` slice in
    `internal/tui/catalog/catalog.go` (`All`/`Lookup` read it), and wire the
    drills and `EnterTarget` it needs.
-7. **Test** per `docs/dev/testing.md`:
+7. **Test** per `docs/design/tui.md` "Testing":
    - a catalog test that renders the query against fixture scopes and pins
      its DQL shape with substring checks;
    - a model test driving the real app with synthetic keys;

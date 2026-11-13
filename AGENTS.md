@@ -42,10 +42,9 @@ When you find a rule that can be checked mechanically, add a test to
 | Fix a bug | skill [fix-bug](.agents/skills/fix-bug/SKILL.md) |
 | Review a PR (yours or someone else's) | skill [review-pr](.agents/skills/review-pr/SKILL.md), in a fresh session |
 | Infra: CI, lint, release, tooling | `makefile`, `.github/workflows/`, [releasing.md](docs/dev/releasing.md); keep `make fmt lint test` the one local gate |
-| Understand how the code fits | [architecture.md](docs/dev/architecture.md), then [tui.md](docs/design/tui.md) |
-| Write or fix tests | [testing.md](docs/dev/testing.md) |
+| Understand how the code fits | [tui.md](docs/design/tui.md) "Architecture" |
+| Write or fix tests | [tui.md](docs/design/tui.md) "Testing" |
 | A decision that ripples beyond one view | new ADR per [docs/adr/README.md](docs/adr/README.md) |
-| Work spanning several PRs | a plan per [docs/plans/README.md](docs/plans/README.md) |
 
 Skills live in `.agents/skills/<name>/SKILL.md` (`.claude/skills` links
 there). If your tool does not load skills, open the file and follow it.
@@ -114,7 +113,6 @@ The repository is the memory; there is no other. Before you finish:
 | A decision whose reversal would ripple through more than one view | a new ADR in [docs/adr/](docs/adr/README.md) |
 | A shortcut, known gap or duplication you left behind | [tech-debt.md](docs/dev/tech-debt.md) |
 | A new shared helper or a new hard rule | the tables in this file (and a test for a rule) |
-| Work that continues in another PR | its plan in [docs/plans/](docs/plans/README.md) |
 
 Do not record what `git log` or the code already says. Keep this file under
 150 lines (`TestAgentDocsStayAccurate` checks it and every path it names).
@@ -122,8 +120,7 @@ Do not record what `git log` or the code already says. Keep this file under
 ## Docs map
 
 - [docs/design/vision.md](docs/design/vision.md) — scope charter, six gates, anti-goals
-- [docs/design/tui.md](docs/design/tui.md) — view catalog, navigation, detail pages
-- [docs/dev/architecture.md](docs/dev/architecture.md) — dtctl relationship, catalog, shell, discovery, workspace
+- [docs/design/tui.md](docs/design/tui.md) — view catalog, navigation, detail pages, architecture, testing
 - [docs/dev/learnings.md](docs/dev/learnings.md) — live-validated DQL/Grail facts and patterns
 - [docs/adr/](docs/adr/README.md) — decision records; 0001, 0011 and 0012 are load-bearing
 - [CONTRIBUTING.md](CONTRIBUTING.md) — PR conventions

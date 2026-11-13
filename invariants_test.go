@@ -127,7 +127,7 @@ var (
 // drift from the code.
 func TestAgentDocsStayAccurate(t *testing.T) {
 	docs := []string{"AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", ".github/pull_request_template.md",
-		"docs/README.md", "docs/dev/architecture.md", "docs/dev/testing.md", "docs/dev/tech-debt.md", "docs/plans/README.md"}
+		"docs/README.md", "docs/dev/tech-debt.md"}
 	skills, err := filepath.Glob(".agents/skills/*/SKILL.md")
 	if err != nil || len(skills) == 0 {
 		t.Fatalf("no skills under .agents/skills: %v", err)

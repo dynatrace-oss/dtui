@@ -8,7 +8,7 @@ description: Fix a dtui bug test-first and at the right layer, then record the c
 1. **Reproduce headlessly first.** Write the failing test before the fix:
    a model test (synthetic `tea.Msg` keys against the real app), a catalog
    test (the rendered DQL), or a source test (stub the injected `Source` or
-   the `runFn` seam). See `docs/dev/testing.md`. If the bug only shows on a
+   the `runFn` seam). See `docs/design/tui.md` "Testing". If the bug only shows on a
    live tenant, find the record shape that triggers it and seed it as
    synthetic rows.
 2. **Check the known bug classes** in `docs/dev/learnings.md` before

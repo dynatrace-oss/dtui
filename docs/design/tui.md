@@ -869,6 +869,28 @@ for the session (refreshed on context switch). This keeps the ViewSpec catalog
 small and honest: curated defaults where curation adds value, introspection
 everywhere else.
 
+### Relationship to dtctl
+
+dtui is its own module (`github.com/dynatrace-oss/dtui`) and a pure
+**consumer** of the published `dtctl` modules (ADR-0004, ADR-0005):
+
+- It reads dtctl's config (`~/.config/dtctl/config`) and keyring **without ever
+  writing them**. Contexts are created/managed with `dtctl ctx set`. A
+  `--context` flag or `DTCTL_CONTEXT` env override is applied in memory only
+  (session-local) — an open TUI must never repoint other dtctl processes.
+- It imports dtctl's `sdk/session` (config, credentials, client), `pkg/exec`
+  (DQL executor), `pkg/resources/*` (SLO/detector/analyzer/segment handlers),
+  and `pkg/output` renderers. **No business logic is forked** — the TUI is a
+  presentation layer.
+- The charmbracelet/bubbletea dependencies live in this module only; dtctl's
+  root module and SDK stay TUI-free. The dtctl module versions are pinned
+  to released tags in `go.mod` (plain `require`, no `replace`).
+
+`main.go` and `sources.go` are the wiring seam: they construct the tenant
+client and adapt dtctl resource handlers into `tui.Source` closures, so that
+**`internal/tui` never does HTTP itself**. Follow this — new API-backed views
+get a source constructor in `sources.go`, tested with an interface stub.
+
 ### Package layout
 
 ```text
@@ -890,12 +912,14 @@ internal/tui/
   datasource.go          # async adapters: pkg/exec + resource calls → tea.Cmd/tea.Msg
 ```
 
-Rules, mirroring existing layering: `internal/tui` imports dtctl's
-`pkg/resources`, `pkg/exec`, `pkg/output` (renderers) and the SDK's
-`sdk/session` (config, credentials, client, safety); nothing imports
-`internal/tui` except the `dtui` main package; no HTTP in `internal/tui`;
-every API call is a `tea.Cmd` goroutine with `context.Context` cancellation
-tied to view lifetime.
+Rules, mirroring existing layering (`invariants_test.go` enforces the
+imports): `internal/tui` imports only dtctl's `pkg/exec` (DQL executor) and
+`pkg/output` (renderers); `main.go` and `sources.go` use `sdk/session` and
+`pkg/resources` and hand the TUI injected `Source` closures; nothing imports
+`internal/tui` except the `dtui` main package and `cmd/web`; no HTTP in
+`internal/tui`; every API call is a `tea.Cmd` goroutine, and stale results
+are dropped by `(owner, seq)` rather than by cancellation (see
+[learnings.md](../dev/learnings.md) section 3).
 
 ### Refresh & data handling
 

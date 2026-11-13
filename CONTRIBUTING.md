@@ -35,11 +35,11 @@ before you invest time. Overriding a gate requires an ADR, not a PR comment.
 
 ## Code conventions
 
-- Architecture and layering: see [AGENTS.md](AGENTS.md), [docs/dev/architecture.md](docs/dev/architecture.md) and [docs/design/tui.md](docs/design/tui.md).
+- Architecture and layering: see [AGENTS.md](AGENTS.md) and [docs/design/tui.md](docs/design/tui.md).
   Nothing imports `internal/tui` except the main package (and `cmd/web`); no HTTP inside `internal/tui`.
 - DQL: **Grail fails silently** — a wrong field returns an empty result with no
   error. Validate new queries against a live environment and confirm they return rows.
-- Tests: no HTTP, no TTY, no sleeps; golden files only for layout snapshots of main screens (see [docs/dev/testing.md](docs/dev/testing.md)).
+- Tests: no HTTP, no TTY, no sleeps; golden files only for layout snapshots of main screens (see [docs/design/tui.md](docs/design/tui.md) "Testing").
 - Reuse the shared helpers listed in [AGENTS.md](AGENTS.md) "Reuse before you write" instead of writing feature-local copies.
 - **Use synthetic identifiers only** in tests, fixtures and docs — never real
   environment names, URLs, entity IDs or tokens.

@@ -1,32 +1,43 @@
 ---
 name: review-pr
-description: Review a dtui pull request as the guardian of the codebase and leave advisory comments on architecture, layering, reuse vs duplication, read-only safety, queries, tests, privacy, and docs/ADR/learnings drift. Use when asked to review a PR, a branch, or your own change before opening it. Run in a fresh session that did not write the change.
+description: Review a dtui pull request as the guardian of the codebase — architecture, layering, reuse vs duplication, read-only safety, queries, tests, privacy, and docs/ADR/learnings drift, in the diff and in the code around it. Use when asked to review a PR, a branch, or your own change before opening it. Run in a fresh session that did not write the change.
 ---
 
 # Review a PR as the codebase's guardian
 
 You protect dtui's architecture and its written knowledge from this change.
-You do not gate it: your output is comments and questions. Never approve,
-request changes, push commits or block a merge — the author and maintainers
-decide. A good review asks "what about…?" where the change and the
-codebase's rules meet.
+Most findings are questions and suggestions; the author decides. When
+something is really broken — a hard constraint violated, a regression, a
+contradicted ADR, a doc the change makes false — say so plainly, request
+changes, and propose the fix or the alternative design. Do not block on
+taste. Do not push commits to the author's branch.
 
 ## 1. Load context, cheapest first
-
-```bash
-gh pr view <n> --repo dynatrace-oss/dtui --json title,body,files,commits,headRefOid
-gh pr diff <n> --repo dynatrace-oss/dtui      # or: git diff upstream/main...HEAD
-gh pr checks <n> --repo dynatrace-oss/dtui
-```
 
 - Read the diff before the description. Judge the code, then check the
   description matches it.
 - Read `AGENTS.md` (constraints, reuse table, write-back table). Open other
-  docs only for the areas the diff touches, via its routing table.
+  docs only for the areas the change touches, via its routing table.
 - Do not redo what CI does (lint, format, tests, invariants). Read the
   failures, if any, and move on.
 
-## 2. Ask these questions
+## 2. Follow the change outward
+
+The diff is the entry point, not the boundary. For each changed symbol,
+look a few steps around it:
+
+- **Back:** callers and registrations (`rg -n '<Symbol>\b'`). A changed
+  signature, default, key or message — is every caller still right?
+- **Forward:** what it calls and the data it hands on. Does a changed row
+  shape, field name or scope still match what the consumer expects?
+- **Sideways:** sibling specs, views or sources built the same way. Should
+  they get the same change, or does this one now diverge from them? Their
+  tests and goldens — do they still describe the behaviour?
+
+Report effects outside the diff the same way, anchored to the line that is
+now wrong (or to the diff line that causes it).
+
+## 3. Ask these questions
 
 Skip any that do not apply. Each finding must point at a line or file.
 
@@ -79,8 +90,7 @@ Skip any that do not apply. Each finding must point at a line or file.
 - A decision whose reversal would ripple beyond one view → ADR needed?
   Contradicts an ADR → it must supersede it explicitly.
 - New shared helper or hard rule → AGENTS.md tables (and a test for a rule)?
-  A shortcut left behind → `docs/dev/tech-debt.md`? Multi-PR work → a plan
-  in `docs/plans/`?
+  A shortcut left behind → `docs/dev/tech-debt.md`?
 
 **Scope and privacy**
 
@@ -89,31 +99,17 @@ Skip any that do not apply. Each finding must point at a line or file.
 - Tenant names, URLs, IDs, hostnames, people or ticket keys anywhere,
   including goldens, fixtures and the PR body.
 
-## 3. Write the comments
+## 4. Write the review
 
 - One comment per finding, anchored to `path:line`. Each says what you see,
-  why it matters (cite the rule, ADR or doc), and a concrete question or
-  suggestion.
-- Prefix a label: `invariant` (breaks a hard constraint), `concern`,
+  why it matters (cite the rule, ADR or doc), and a concrete fix,
+  alternative or question.
+- Prefix a label: `blocking` (really broken: a hard constraint, a
+  regression, a contradicted ADR — always with a proposed fix), `concern`,
   `question`, `docs-drift`, `reuse`, `nit` (at most three).
 - Say nothing about what linters and CI enforce, about taste, or to praise.
   If unsure, ask instead of asserting. Do not dump the checklist — a
   category with no finding is not mentioned.
-- Finish with a summary: the top findings, then one line
+- Finish with a summary: the verdict (request changes only for `blocking`
+  findings, otherwise comment), the top findings, then one line
   `Docs/ADR/learnings: updated | not needed | missing: <what>`.
-
-## 4. Post as a comment-only review
-
-Write the review to `review.json` and post it with event `COMMENT` (never
-`APPROVE` or `REQUEST_CHANGES`):
-
-```json
-{"commit_id": "<headRefOid>", "event": "COMMENT", "body": "<summary>",
- "comments": [{"path": "internal/tui/x.go", "line": 42, "side": "RIGHT", "body": "question: …"}]}
-```
-
-```bash
-gh api repos/dynatrace-oss/dtui/pulls/<n>/reviews --input review.json
-```
-
-If you cannot post, return the same content as Markdown to whoever asked.
