@@ -14,7 +14,7 @@ require (
 	github.com/dynatrace-oss/dtctl/sdk v0.45.0
 	github.com/muesli/termenv v0.16.0
 	github.com/spf13/cobra v1.10.2
-	golang.org/x/term v0.47.0
+	golang.org/x/term v0.48.0
 	google.golang.org/protobuf v1.36.12
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -79,6 +79,6 @@ require (
 	go.opentelemetry.io/otel/metric v1.47.0 // indirect
 	go.opentelemetry.io/otel/trace v1.47.0 // indirect
 	golang.org/x/net v0.62.0 // indirect
-	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
 )
