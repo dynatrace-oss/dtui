@@ -64,19 +64,15 @@ jobs:
         with:
           go-version-file: go.mod
 
-      # Every mutant leaves ~12 MB of never-reused build cache behind
-      # (go-gremlins/gremlins#177), which fills the runner's ~14 GB of free
-      # disk until it drops off ("lost communication with the server").
-      - name: Free disk space
-        run: |
-          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
-          df -h /
-
+      # On a timeout gremlins kills `go test` but not the test binary it
+      # spawned, so an infinite-loop mutant keeps a core busy until Go's
+      # default 10m test timeout. A few of those starve the runner until it
+      # drops off; a short timeout makes the orphan exit on its own.
       - name: Mutation test the module
         env:
-          GOCACHE: ${{ runner.temp }}/go-build
+          GOFLAGS: -timeout=2m
         run: |
-          (while sleep 120; do find "$GOCACHE" -type f -mmin +10 -delete; echo "disk: $(df -h / | tail -1)"; done) &
+          (while sleep 120; do echo "resources: load $(cut -d' ' -f1-3 /proc/loadavg), mem $(free -m | awk '/Mem/{print $3"/"$2" MB"}'), test binaries $(pgrep -fc '\.test ' || true)"; done) &
           make mutation
 
       - name: Upload report
