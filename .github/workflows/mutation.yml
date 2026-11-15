@@ -64,14 +64,17 @@ jobs:
         with:
           go-version-file: go.mod
 
+      # Some mutants turn a loop into an endless append (e.g. negating
+      # `for len(body) < height-2` in home.go) and eat the runner's memory in
+      # seconds, so the runner dies. Capping each process's data segment makes
+      # such a test binary crash on its own, which counts as a killed mutant.
       # On a timeout gremlins kills `go test` but not the test binary it
-      # spawned, so an infinite-loop mutant keeps a core busy until Go's
-      # default 10m test timeout. A few of those starve the runner until it
-      # drops off; a short timeout makes the orphan exit on its own.
+      # spawned, so the short test timeout also stops orphaned loops.
       - name: Mutation test the module
         env:
           GOFLAGS: -timeout=2m
         run: |
+          ulimit -d 3145728
           (while sleep 120; do echo "resources: load $(cut -d' ' -f1-3 /proc/loadavg), mem $(free -m | awk '/Mem/{print $3"/"$2" MB"}'), test binaries $(pgrep -fc '\.test ' || true)"; done) &
           make mutation
 
