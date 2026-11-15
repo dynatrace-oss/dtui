@@ -64,13 +64,20 @@ jobs:
         with:
           go-version-file: go.mod
 
-      # One worker per CPU starves the hosted runner until it drops off
-      # ("lost communication with the server"); the resource log shows
-      # which of memory or disk ran out if it happens again.
-      - name: Mutation test the module
+      # Every mutant leaves ~12 MB of never-reused build cache behind
+      # (go-gremlins/gremlins#177), which fills the runner's ~14 GB of free
+      # disk until it drops off ("lost communication with the server").
+      - name: Free disk space
         run: |
-          (while sleep 60; do echo "::group::resources $(date -u +%H:%M)"; free -m; df -h / /tmp; echo "::endgroup::"; done) &
-          make mutation MUTATION_WORKERS=2
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Mutation test the module
+        env:
+          GOCACHE: ${{ runner.temp }}/go-build
+        run: |
+          (while sleep 120; do find "$GOCACHE" -type f -mmin +10 -delete; echo "disk: $(df -h / | tail -1)"; done) &
+          make mutation
 
       - name: Upload report
         if: always()
