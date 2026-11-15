@@ -1,0 +1,10 @@
+ acme.queue.depth   avg   last 2h
+ Queue depth — Mes…
+
+ ● avg(acme.queue.d…
+      10┤⠀⠀⠀⠀⣰⣦⡀⠀⠀⠀
+        │⠀⠀⠀⣰⣿⣿⣿⣦⠀⠀
+        │⠀⠀⣰⣿⣿⣿⣿⣿⣷⡄
+        │⠀⣰⣿⣿⣿⣿⣿⣿⣿⣿
+      -2┤⣰⣿⣿⣿⣿⣿⣿⣿⣿⣿
+        └ 2h ago now

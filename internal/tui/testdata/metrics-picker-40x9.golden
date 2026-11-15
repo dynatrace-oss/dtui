@@ -1,0 +1,8 @@
+ acme.queue.depth   avg    by queue   node-1  last 2h
+
+ split by dimension
+
+  queue  (1 value)
+  region  (4 values)
+ pod  (9 values)
+ … 1 more

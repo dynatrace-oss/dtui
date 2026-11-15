@@ -1,4 +1,4 @@
-.PHONY: all build install test test-coverage mutation mutation-diff vet lint fmt clean third-party-licenses
+.PHONY: all build install test test-coverage mutation mutation-shard mutation-merge mutation-diff vet lint fmt clean third-party-licenses
 
 # Leading "v" stripped so local builds report the same shape as release builds.
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null | sed 's/^v//' || echo dev)
@@ -16,6 +16,8 @@ MUTATION_THRESHOLD ?= 80
 MUTATION_MIN_JUDGED ?= 10
 # 0 lets gremlins use one worker per CPU.
 MUTATION_WORKERS ?= 0
+MUTATION_SHARD ?= 1
+MUTATION_SHARDS ?= 1
 
 all: build
 
@@ -59,6 +61,19 @@ test-coverage:
 mutation:
 	@$(GREMLINS) unleash -S lt --workers $(MUTATION_WORKERS) -o mutation.json .
 	@scripts/mutation-report.sh mutation.json
+
+# One of MUTATION_SHARDS slices of the full run (MUTATION_SHARD is 1-based),
+# written to mutation-<shard>.json; mutation-merge combines the slices.
+mutation-shard:
+	@$(GREMLINS) unleash --dry-run -o mutation-dry.json . >/dev/null
+	@$(GREMLINS) unleash -S lt --workers $(MUTATION_WORKERS) \
+		$$(scripts/mutation-shard.sh mutation-dry.json $(MUTATION_SHARD) $(MUTATION_SHARDS)) \
+		-o mutation-$(MUTATION_SHARD).json .
+
+# Merges the shard reports and fails below MUTATION_THRESHOLD percent efficacy.
+mutation-merge:
+	@scripts/mutation-merge.sh mutation-[0-9]*.json >mutation.json
+	@scripts/mutation-report.sh mutation.json $(MUTATION_THRESHOLD) $(MUTATION_MIN_JUDGED)
 
 # Mutation testing over lines changed since MUTATION_BASE; fails below
 # MUTATION_THRESHOLD percent efficacy once at least MUTATION_MIN_JUDGED

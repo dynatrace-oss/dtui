@@ -57,6 +57,11 @@ make mutation-diff  # only lines changed since origin/main (what CI runs on PRs)
 make mutation       # the whole module (slow; CI runs it weekly)
 ```
 
+The weekly run splits the module into eight shards of equal mutant count
+(`make mutation-shard`, run as parallel jobs) and merges them
+(`make mutation-merge`). It fails below the same 80% efficacy over the
+whole module.
+
 PRs fail below 80% efficacy (killed ÷ (killed + lived)) on the changed
 lines once at least 10 mutants were judged; below that, one equivalent
 mutant would decide the result, so small diffs only report. To fix a lived mutant, add a test that asserts the behavior the line
