@@ -14,6 +14,8 @@ GREMLINS ?= go run github.com/go-gremlins/gremlins/cmd/gremlins@v0.6.0
 MUTATION_BASE ?= origin/main
 MUTATION_THRESHOLD ?= 80
 MUTATION_MIN_JUDGED ?= 10
+# 0 lets gremlins use one worker per CPU.
+MUTATION_WORKERS ?= 0
 
 all: build
 
@@ -55,7 +57,7 @@ test-coverage:
 # Mutation testing over the whole module (slow: every mutant recompiles its
 # package). Reports lived mutants; no threshold.
 mutation:
-	@$(GREMLINS) unleash -S lt -o mutation.json .
+	@$(GREMLINS) unleash -S lt --workers $(MUTATION_WORKERS) -o mutation.json .
 	@scripts/mutation-report.sh mutation.json
 
 # Mutation testing over lines changed since MUTATION_BASE; fails below

@@ -64,8 +64,13 @@ jobs:
         with:
           go-version-file: go.mod
 
+      # One worker per CPU starves the hosted runner until it drops off
+      # ("lost communication with the server"); the resource log shows
+      # which of memory or disk ran out if it happens again.
       - name: Mutation test the module
-        run: make mutation
+        run: |
+          (while sleep 60; do echo "::group::resources $(date -u +%H:%M)"; free -m; df -h / /tmp; echo "::endgroup::"; done) &
+          make mutation MUTATION_WORKERS=2
 
       - name: Upload report
         if: always()
