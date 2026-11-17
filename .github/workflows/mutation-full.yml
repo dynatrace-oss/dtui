@@ -1,0 +1,87 @@
+name: mutation (full)
+
+# Weekly mutation test of the whole module, gated at the same efficacy as
+# the PR check (mutation.yml). A separate workflow so its jobs never show up
+# as skipped checks on pull requests. See CONTRIBUTING.md.
+on:
+  schedule:
+    - cron: '41 3 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mutation-full-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ~4,000 mutants, each recompiling and testing its package: serial on one
+  # runner it takes over two hours, so it splits into shards of equal mutant
+  # count (scripts/mutation-shard.sh) and merges the reports.
+  shard:
+    name: shard ${{ matrix.shard }}/8
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      # Some mutants turn a loop into an endless append (e.g. negating
+      # `for len(body) < height-2` in home.go) and eat the runner's memory in
+      # seconds, so the runner dies. Capping each process's data segment makes
+      # such a test binary crash on its own, which counts as a killed mutant.
+      # On a timeout gremlins kills `go test` but not the test binary it
+      # spawned, so the short test timeout also stops orphaned loops.
+      - name: Mutation test the shard
+        env:
+          GOFLAGS: -timeout=2m
+          SHARD: ${{ matrix.shard }}
+        run: |
+          ulimit -d 3145728
+          make mutation-shard MUTATION_SHARD="$SHARD" MUTATION_SHARDS=8
+
+      - name: Upload shard report
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mutation-shard-${{ matrix.shard }}
+          path: mutation-${{ matrix.shard }}.json
+
+  report:
+    name: report (80% gate)
+    needs: shard
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download shard reports
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: mutation-shard-*
+          merge-multiple: true
+
+      - name: Merge and check the threshold
+        run: make mutation-merge
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mutation-report
+          path: mutation.json
+          if-no-files-found: ignore
