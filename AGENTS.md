@@ -59,9 +59,9 @@ belongs in a shared file; a third copy is a bug.
 | Need | Shared home |
 | --- | --- |
 | Show tenant-supplied text safely | `catalog.SafeText` (`internal/tui/catalog/format.go`); `sanitizeFrame` (`internal/tui/sanitize.go`) is the last guard |
-| Severity colors | `internal/tui/catalog/severity.go` |
-| Sparklines | `internal/tui/catalog/spark.go` |
-| Render typed values (ids, timestamps, durations, JSON) | `internal/tui/render.go` |
+| Severity and risk-level colors | `internal/tui/catalog/severity.go` |
+| Sparklines and series totals | `internal/tui/catalog/spark.go` |
+| Render typed values (ids, timestamps, durations, JSON, query windows) | `internal/tui/render.go` |
 | Colors and styles | the `internal/tui/theme` package — no ad-hoc colors |
 | Cursor and viewport for a list | `internal/tui/scroller.go` |
 | Modal overlays | `internal/tui/overlay.go` |

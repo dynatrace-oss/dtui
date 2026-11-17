@@ -1,6 +1,6 @@
 // Package workspace discovers and parses the per-project .dtui.yaml
 // workspace file: committable defaults (filter segments, timeframe, initial
-// view, preferred environment) that tools apply on top of the user's personal
+// view, preferred environment, home layout) that tools apply on top of the user's personal
 // dtctl config. Unlike the local .dtctl.yaml (which replaces the global config
 // wholesale), a workspace file carries no contexts, no credentials, and no
 // executable keys by construction — it can only narrow what a session shows,
@@ -36,7 +36,8 @@ const MaxPrimaryTags = 5
 const Version = 1
 
 // Workspace is the parsed .dtui.yaml. All fields are optional; unknown
-// keys are ignored so older builds keep working with newer committed files.
+// top-level keys are ignored (and listed in UnknownKeys) so older builds keep
+// working with newer committed files. The home block is strict: see parseHome.
 // Values are used verbatim — no environment-variable expansion, because a
 // committed file must not behave differently per machine.
 type Workspace struct {
@@ -51,7 +52,23 @@ type Workspace struct {
 	// time.
 	PrimaryTags []string `yaml:"primary-tags,omitempty"`
 
+	// Home is the parsed home-screen layout (nil = the default panels). It
+	// applies only when HomeIssues is empty: a broken home block rejects the
+	// whole layout, never the segments, view or timeframe.
+	Home *Home `yaml:"-"`
+	// HomeIssues lists why the home block was rejected (empty = accepted).
+	HomeIssues []Issue `yaml:"-"`
+	// UnknownKeys flags top-level keys this build does not know — ignored
+	// for forward compatibility, but likely typos worth a validator warning.
+	UnknownKeys []Issue `yaml:"-"`
+
 	path string // discovered file path; never serialized
+}
+
+// knownKeys are the top-level keys this build understands.
+var knownKeys = map[string]bool{
+	"version": true, "environment": true, "view": true, "timeframe": true,
+	"segments": true, "primary-tags": true, "home": true,
 }
 
 // Segment references a filter segment by name or UID, with optional variable
@@ -132,12 +149,28 @@ func Load(path string) (*Workspace, error) {
 	if err != nil {
 		return nil, fmt.Errorf("reading %s: %w", path, err)
 	}
+	var doc yaml.Node
+	if err := yaml.Unmarshal(data, &doc); err != nil {
+		return nil, fmt.Errorf("parsing %s: %w", path, err)
+	}
 	var w Workspace
-	if err := yaml.Unmarshal(data, &w); err != nil {
+	if err := doc.Decode(&w); err != nil {
 		return nil, fmt.Errorf("parsing %s: %w", path, err)
 	}
 	if err := w.validate(); err != nil {
 		return nil, fmt.Errorf("%s: %w", path, err)
+	}
+	if len(doc.Content) == 1 && doc.Content[0].Kind == yaml.MappingNode {
+		top := doc.Content[0].Content
+		for i := 0; i+1 < len(top); i += 2 {
+			k, v := top[i], top[i+1]
+			switch {
+			case k.Value == "home":
+				w.Home, w.HomeIssues = parseHome(v)
+			case !knownKeys[k.Value]:
+				w.UnknownKeys = append(w.UnknownKeys, issueAt(k, keyPath("", k.Value), "unknown key — ignored by this build"))
+			}
+		}
 	}
 	w.path = path
 	return &w, nil
