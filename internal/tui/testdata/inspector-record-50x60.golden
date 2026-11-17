@@ -1,0 +1,37 @@
+▍ highlights
+▌ status                            ok
+ host.name                         node-1
+
+▍ links
+ trace.id                          4bf92f3577b3… ▸
+ dt.entity.process_group[0]        PROCESS_GROU… ▸
+ dt.entity.process_group[1]        PROCESS_GROU… ▸
+ dt.smartscape.host                HOST-0000000… ▸
+ link0.url                         https://exam… ▸
+ link1.url                         https://exam… ▸
+ link2.url                         https://exam… ▸
+ link3.url                         https://exam… ▸
+
+ note                              ▾
+    a long free-text value a long free-text
+    value a long free-text value a long free-
+    text value a long free-text value a long
+    free-text value a long free-text value a
+    long free-text value
+ payload                           ▾
+    order:
+      id: 7
+      items:
+        ["x", "y"]
+
+▍ link4
+ link4.url                         https://exam… ▸
+
+▍ url
+ url.full                          https://shop… ▸
+
+▍ service
+ service.name                      checkout
+
+▍ dt
+ dt.entity.host                    HOST-0000000… ▸
