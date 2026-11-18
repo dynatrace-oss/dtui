@@ -80,7 +80,7 @@ Add a row when you create a shared helper.
 make build          # → bin/dtui (ldflags stamp version + dtctl's pkg/version.Version)
 make install        # installs dtui + a `dtctl-tui` symlink so `dtctl tui` dispatches here
 make test           # go test -race ./...
-make lint           # golangci-lint run ./...  (.golangci.yml — must pass clean)
+make lint           # CI's pinned golangci-lint under go.mod's toolchain (.golangci.yml — must pass clean)
 make fmt            # golangci-lint fmt (gofmt + goimports)
 make mutation-diff  # gremlins on lines changed since origin/main (CI gate on PRs)
 

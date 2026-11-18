@@ -200,3 +200,23 @@ func TestAgentDocsStayAccurate(t *testing.T) {
 		}
 	}
 }
+
+// TestLintVersionMatchesCI keeps `make lint` and CI on the same golangci-lint:
+// a drift lets code pass locally and fail the CI gate, or the reverse.
+func TestLintVersionMatchesCI(t *testing.T) {
+	read := func(path string) string {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(data)
+	}
+	makeVer := regexp.MustCompile(`golangci-lint/v2/cmd/golangci-lint@(v[0-9.]+)`).FindStringSubmatch(read("makefile"))
+	ciVer := regexp.MustCompile(`golangci-lint-action@\S+.*\n\s+with:\n\s+version: (v[0-9.]+)`).FindStringSubmatch(read(".github/workflows/ci.yml"))
+	if makeVer == nil || ciVer == nil {
+		t.Fatalf("golangci-lint pin not found (makefile %v, ci.yml %v)", makeVer, ciVer)
+	}
+	if makeVer[1] != ciVer[1] {
+		t.Errorf("makefile pins golangci-lint %s, ci.yml %s", makeVer[1], ciVer[1])
+	}
+}

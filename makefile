@@ -18,6 +18,11 @@ MUTATION_MIN_JUDGED ?= 10
 MUTATION_WORKERS ?= 0
 MUTATION_SHARD ?= 1
 MUTATION_SHARDS ?= 1
+# Lint with CI's pinned golangci-lint under go.mod's toolchain: a linter
+# reading a newer system Go's export data fails to typecheck the stdlib.
+# Keep the version equal to ci.yml (TestLintVersionMatchesCI).
+GO_TOOLCHAIN ?= go$(shell awk '/^go /{print $$2}' go.mod)
+GOLANGCI_LINT ?= GOTOOLCHAIN=$(GO_TOOLCHAIN) go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.1
 
 all: build
 
@@ -86,10 +91,10 @@ vet:
 	@go vet ./...
 
 lint:
-	@golangci-lint run ./...
+	@$(GOLANGCI_LINT) run ./...
 
 fmt:
-	@golangci-lint fmt ./...
+	@$(GOLANGCI_LINT) fmt ./...
 
 clean:
 	@rm -rf bin coverage.out mutation.json
