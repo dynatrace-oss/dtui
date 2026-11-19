@@ -24,6 +24,8 @@ can read in two minutes.
 | [0014](0014-breadth-not-depth.md) | Breadth across nouns, capped depth; render to decide |
 | [0015](0015-provider-adaptive-cloud-columns-and-id-name-enrichment.md) | Provider-adaptive cloud columns; session-cached ID→name enrichment |
 | [0016](0016-detail-panes-show-real-grail-keys.md) | Detail panes show real Grail keys; app-derived values are labeled, not disguised |
+| [0017](0017-named-view-facet-presets.md) | Named view facet presets are local narrowing, not tenant config |
+| [0018](0018-launch-flags-are-a-handoff-contract.md) | Launch flags are a handoff contract; agents emit commands, never drive dtui |
 
 New ADRs: next number, same three sections, `Accepted`/`Superseded` status.
 Record a decision when reversing it would ripple through more than one view.

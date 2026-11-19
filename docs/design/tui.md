@@ -192,9 +192,9 @@ This is the heart of the design. Navigation has four mechanisms that compose:
 
 - `:` opens the command bar; typing fuzzy-matches view names and aliases
   (`:po` → pods, `:sv` → services) with an inline completion popup.
-- Arguments narrow the jump: `:logs error`, `:pods checkout`, `:trace <id>`,
-  `:ctx prod-eu`. A bare `:ctx` (no name) opens a picker over the configured
-  contexts with the current one marked.
+- Arguments narrow the jump: `:logs error`, `:pods checkout`, `:trace <id>`, `:query <dql>` (runs it),
+  `:ctx prod-eu`, `:preset payments-errors`. A bare `:ctx` (no name) opens a picker over the configured
+  contexts with the current one marked. Bare `:preset` lists saved names.
 - `:q` quits, `:help` opens the key reference.
 
 ### 2. Drill-down vocabulary — the same keys everywhere
@@ -282,7 +282,8 @@ pod → workload → namespace → the sibling workload that's actually broken.
 | `-` | toggle between the two most recent views (k9s-style) |
 | `H` | **history** — every breadcrumb trail visited, persisted per context across sessions (`~/.local/state/dtui/history.json`); enter restores the whole trail (data refetched, timeframe reapplied) |
 | `/` | incremental filter of the current table (client-side, per keystroke); **enter adds it as a server-side `\| search`** over every field of the unfetched dataset (terms stack as AND), **alt+enter replaces** the active terms; `esc` clears |
-| `f` / `F` | **facet manager** — active filters listed first (enter edits in place, `ctrl+x` removes one), below them the attributes (quick-search over the fetched records' keys) to add a new facet: pick a value from the server's `fieldsSummary` top values, or type a `*` pattern (`payment*`, `*ayment*`); filters stack, render as pills, survive refresh/timeframe, and persist into history / `F` clears them all (esc-chain clears too). On bucket-backed views `dt.system.bucket` is pinned first (tagged `bucket`): buckets are Grail's physical data separation, so a bucket facet prunes reads at the source — its filter injects right after the fetch, and every record is projected with its bucket (`fieldsAdd dt.system.bucket`) so the inspector shows it |
+| `f` / `F` | **facet manager** — active filters listed first (enter edits in place, `ctrl+x` removes one, `W` saves a named preset to `~/.local/state/dtui/presets/<context>.yaml`), below them the attributes (quick-search over the fetched records' keys) to add a new facet: pick a value from the server's `fieldsSummary` top values, or type a `*` pattern (`payment*`, `*ayment*`); filters stack, render as pills, survive refresh/timeframe, and persist into history / `F` clears them all (esc-chain clears too). On bucket-backed views `dt.system.bucket` is pinned first (tagged `bucket`): buckets are Grail's physical data separation, so a bucket facet prunes reads at the source — its filter injects right after the fetch, and every record is projected with its bucket (`fieldsAdd dt.system.bucket`) so the inspector shows it |
+| `:preset` / `:preset <name>` | **preset list** — name, target view, **source** (`personal` vs `workspace`), and saved facets; enter opens the highlighted one, `d` deletes a personal save (workspace `.dtui.yaml` presets are read-only here). `:preset <name>` skips the list. `dtui --preset` / `dtui delete-preset` are the CLI forms; `W` on a faceted DQL table saves to `~/.local/state/dtui/presets/<context>.yaml`. Personal presets are per dtctl context (`:ctx` swaps the list; `list-presets`/`delete-preset` act on the active context); `.dtui.yaml` presets are shared |
 | `f` (inspector / details tab) | facet the **list beneath** by the selected field's value — scalars apply exactly, array elements as a contains pattern; refused with a message when the list's rows don't carry the field |
 | `shift-j/k` | sort by column, toggle direction |
 | `0`–`9` | hotkeys — fixed view bookmarks (0 home, 1 problems, 2 services, 3 hosts, 4 pods, 5 logs, 6 traces, 7 workloads, 8 events, 9 aws); on entered pages digits follow the numbered tab strip |
@@ -323,6 +324,21 @@ dtctl tui                # launch, home view, current context
 dtctl tui pods           # launch directly into a view (any alias works)
 dtctl tui --context prod # launch against a specific context
 ```
+
+Launch flags narrow the first page — the handoff contract of
+[ADR-0018](../adr/0018-launch-flags-are-a-handoff-contract.md), so an agent
+can hand a user one command that opens on its evidence. The CLI resolves them
+into the same `NavigateMsg` the browser build's deep links send, and both open
+their page through `launchView`:
+
+| Flag / argument | Effect |
+|---|---|
+| `<view> <arg>` | the command-bar meaning: `nav` routes it, `trace <id>` opens the waterfall, a table pre-fills its filter, `query` takes the DQL; home takes none |
+| `--timeframe 2h` | relative window (overrides a preset's and `.dtui.yaml`'s) |
+| `--from` / `--to` | absolute window, RFC 3339 with a zone; `--to` defaults to now; the header reads `window … UTC` |
+| `--facet f=v`, `--search t` | server-side narrowing, repeatable, merged onto `--preset`; DQL catalog tables only |
+| `query <dql>`, `--dql`, `-f/--file` | the query view, already running — the same three forms as `dtctl query` (`-f -` is rejected: dtui needs the terminal); the window belongs in the query (`from:`), so the window flags are rejected with it |
+| `--lens name` | open a catalog table on that lens (`traces --lens genai`); an unknown lens is an error listing the valid ones |
 
 Guards, checked before entering the alternate screen: not a TTY → error; agent
 mode → structured error envelope (`"ui is interactive-only"`); `--plain` →
@@ -366,7 +382,8 @@ with the existing live progress (scanned GB / records via the SDK's
 bar), and query history. Its main entrance is `ctrl-q` from any view —
 **reveal the query behind what you're looking at**, tweak it, and re-run. This
 is where curated navigation gracefully hands over to power users, and it makes
-the TUI a DQL *teacher*: every screen can show you how it was made.
+the TUI a DQL *teacher*: every screen can show you how it was made. `:query <dql>`
+and `dtui query '<dql>'` open it with a query already running.
 
 ### Strictly read-only
 

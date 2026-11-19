@@ -19,6 +19,13 @@ process and trace association fields are read tolerantly in
 `internal/tui/catalog/livedebugger.go`. Fix: validate on a tenant with
 Live Debugger data and update the learnings entry.
 
+## Preset save does not store the table lens
+
+`W` writes view + facets + searches. A table opened on a non-default lens
+(`[` / `]`) replays on the spec's default lens. Storing `scope.Lens` would
+need a new YAML field and a restore path in `applyNamedPreset`. Fix: add
+`lens` to the preset schema if a real preset needs it.
+
 ## learnings.md is one long file
 
 `docs/dev/learnings.md` is over 1,700 lines, so an agent looking for one fact

@@ -157,10 +157,10 @@ func TestNavNameSearchMultiMatchDisambiguates(t *testing.T) {
 	}
 }
 
-// `dtui nav <arg>` — the CLI form of the :nav argument (Options.InitialArg).
+// `dtui nav <arg>` — the CLI form of the :nav argument (Options.Launch.ID).
 func TestNavCLIArgumentRoutesTheInitialView(t *testing.T) {
 	a, err := newApp(Options{ContextName: "test", SafetyLevel: "readonly",
-		InitialView: "nav", InitialArg: "HOST-0000000000000011"})
+		Launch: NavigateMsg{Target: "nav", ID: "HOST-0000000000000011"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -170,7 +170,7 @@ func TestNavCLIArgumentRoutesTheInitialView(t *testing.T) {
 	}
 
 	a, err = newApp(Options{ContextName: "test", SafetyLevel: "readonly",
-		InitialView: "nav", InitialArg: "checkout-gw"})
+		Launch: NavigateMsg{Target: "nav", ID: "checkout-gw"}})
 	if err != nil {
 		t.Fatal(err)
 	}

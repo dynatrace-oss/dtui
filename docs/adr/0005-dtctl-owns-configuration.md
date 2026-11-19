@@ -1,6 +1,6 @@
 # ADR-0005: dtctl owns configuration; dtui is a pure consumer
 
-**Status:** Accepted · **Date:** 2026-07-08 (sharpened 2026-07-10)
+**Status:** Accepted · **Date:** 2026-07-08 (sharpened 2026-07-10, refined 2026-11-18 — see [ADR-0017](0017-named-view-facet-presets.md))
 
 ## Context
 
@@ -27,7 +27,9 @@ same cross-process refresh lock dtctl uses.
 ## Consequences
 
 - Existing dtctl users get dtui working instantly; dtui ships no
-  onboarding, no `ctx` CRUD, no config-write path.
+  onboarding, no `ctx` CRUD, no config-write path for dtctl config or
+  credentials. Named view presets under `~/.local/state/dtui/` are UI
+  state, same as history — see [ADR-0017](0017-named-view-facet-presets.md).
 - "Install dtctl to create contexts" is product positioning, not a runtime
   dependency (a container with a baked-in config runs dtui alone).
 - The contract is normative in the dtctl repo's

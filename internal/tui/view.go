@@ -54,28 +54,38 @@ type pushViewMsg struct {
 	facets   []catalog.Facet
 }
 
-// NavigateMsg is an external deep-link request: the wasm host (a browser
-// extension recognizing an id on some other web page) asks dtui to open a
-// curated view — or the trace waterfall — pre-narrowed by server-side facets.
-// It is pure navigation: it composes into the same pushViewMsg/waterfallMsg the
-// in-app drill-downs use, so the read-only contract (ADR-0011) is unaffected.
-// Exported because it crosses the package boundary from cmd/web (js/wasm).
+// NavigateMsg is the one launch descriptor: "open this page, narrowed like
+// this". The CLI's first page (Options.Launch) and the wasm host's deep links
+// (a browser extension recognizing an id on some other web page) both build
+// their page from it (app.launchView). It is pure navigation, so the read-only
+// contract (ADR-0011) is unaffected. Exported because it crosses the package
+// boundary from the main package and cmd/web (js/wasm).
 type NavigateMsg struct {
-	// Target is a catalog view name/alias (e.g. "pods", "genai"), or the
-	// pseudo-target "trace" to open the waterfall for a trace id.
+	// Target is a catalog view name/alias (e.g. "pods", "genai"), "home",
+	// "query", "nav", or the pseudo-target "trace" (the waterfall for ID).
 	Target string
 	// Facets are server-side field==value filters applied to the target view
 	// (the "pre-applied filter"). Ignored by the "trace" pseudo-target.
 	Facets []NavFacet
-	// ID is the identifier for pseudo-targets ("trace" → trace id). When empty
-	// for "trace", the first facet's Value is used.
+	// Searches are server-side `| search` terms on a catalog table.
+	Searches []string
+	// Filter pre-fills a catalog table's incremental filter (the command-bar
+	// argument: `:pods checkout`).
+	Filter string
+	// ID is the identifier for pseudo-targets: "trace" → trace id (when empty,
+	// the first facet's Value is used); "nav" → entity id, type or name.
 	ID string
+	// DQL opens the "query" target with this query already running.
+	DQL string
 	// Lens optionally selects a lens on the target view by name (e.g. "genai"
 	// on the traces view). Ignored if the view has no matching lens.
 	Lens string
 	// Timeframe optionally overrides the window as a label ("7d", "30d", "2h").
 	// Empty or unparseable falls back to the current session timeframe.
 	Timeframe string
+	// From/To pin an absolute window and win over Timeframe. A zero To is
+	// open-ended (runs to now).
+	From, To time.Time
 	// Context optionally names the environment/context the deep link targets.
 	// It is a resolved context name (the wasm host maps a portable tenant URL
 	// to the local context via host match before sending this). When set and
@@ -85,10 +95,15 @@ type NavigateMsg struct {
 	Context string
 }
 
-// NavFacet is a single server-side field==value filter for NavigateMsg. It maps
-// directly to a catalog.Facet; kept separate so callers outside this package
-// need not import the catalog package.
-type NavFacet struct{ Field, Value string }
+// NavFacet is a single server-side filter for NavigateMsg. It maps directly to
+// a catalog.Facet; kept separate so callers outside this package need not
+// import the catalog package. Tokens and MapField/MapKey carry a saved
+// preset's word-match and tag-map facets.
+type NavFacet struct {
+	Field, Value     string
+	Tokens           bool
+	MapField, MapKey string
+}
 
 // waterfallMsg opens the span waterfall for one trace. focusSpanID anchors
 // the cursor on the span the jump came from ("" = trace root). at is that

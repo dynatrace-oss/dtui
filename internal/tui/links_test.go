@@ -81,7 +81,7 @@ func TestDashboardOpenLink(t *testing.T) {
 func TestOpenLinkHook(t *testing.T) {
 	var got string
 	a, err := newApp(Options{
-		ContextName: "test", SafetyLevel: "readonly", InitialView: "home",
+		ContextName: "test", SafetyLevel: "readonly", Launch: NavigateMsg{Target: "home"},
 		OpenURL: func(u string) error { got = u; return nil },
 	})
 	if err != nil {

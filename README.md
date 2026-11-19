@@ -130,7 +130,7 @@ credential store. Details in [docs/design/tui.md](docs/design/tui.md) and the
 
 | Key | Does |
 |---|---|
-| `:` | Command bar: jump to any view (`:pods`, `:svc`, `:logs error`, `:trace <id>`, `:ctx prod`) |
+| `:` | Command bar: jump to any view (`:pods`, `:svc`, `:logs error`, `:trace <id>`, `:query <dql>`, `:ctx prod`) |
 | `/` | Quick search in the current view |
 | `enter` | Open the detail page |
 | `l` `s` `m` `p` `v` `u` | Logs, traces, metrics, problems, events, SLOs, pre-scoped to the selection |
@@ -228,11 +228,27 @@ fish_add_path (go env GOPATH)/bin
 dtui                  # home triage view on the current context
 dtui pods             # jump straight into a view
 dtui --context prod   # session-local override, never persisted
+dtui --preset payments-errors   # named facet preset (from .dtui.yaml or personal save)
+dtui logs --facet loglevel=ERROR
+dtui logs --search timeout --timeframe 24h      # server-side search, relative window
+dtui logs --from 2026-01-02T14:00Z --to 2026-01-02T15:00Z   # absolute window (zone required)
+dtui trace 4bf92f3577b34da6a3ce929d0e0e4736     # a second word works as in the command bar
+dtui pods checkout                              # … here, the table filter
+dtui traces --lens genai                       # a view's lens
+dtui query 'fetch logs, from:now()-1h | filter loglevel == "ERROR"'   # runs on launch, as dtctl query takes it
+dtui query -f investigation.dql                 # or --dql '…'
+dtui list-presets
+dtui --context prod list-presets
+dtui delete-preset payments-errors
 ```
 
 Press `?` inside the TUI for the full key reference, `:` to browse views, and
-`q` to quit. dtui refuses to start without a terminal (or inside an AI-agent
-environment): it is interactive only. It keeps its own UI state (navigation
+`q` to quit. `:preset` lists saved facet presets (name, target view, filters);
+`:preset <name>` opens one; `d` in that list deletes a personal save (`dtui delete-preset` is the CLI form). dtui refuses to start without a terminal (or inside an AI-agent
+environment): it is interactive only. An agent that has investigated something
+with dtctl can still hand you the evidence: the launch flags above are a stable
+contract for a command you paste and run yourself
+([ADR-0018](docs/adr/0018-launch-flags-are-a-handoff-contract.md)). It keeps its own UI state (navigation
 history) under `~/.local/state/dtui/`.
 
 Contexts and credentials are managed with dtctl; a `--context` flag or
@@ -241,11 +257,11 @@ Contexts and credentials are managed with dtctl; a `--context` flag or
 ## Workspace file (`.dtui.yaml`)
 
 A `.dtui.yaml` gives dtui session-local defaults: which view to open,
-the timeframe, the environment, extra tag columns and filter segments. dtui
-finds it by walking up from the current directory, like `.git`, so you can
-commit one to a project (everyone who runs `dtui` inside it gets the same
-setup) or put one in `~` as a personal default. **Every key is optional, and
-no file at all is fine.**
+the timeframe, the environment, extra tag columns, filter segments, and
+named view presets. dtui finds it by walking up from the current directory,
+like `.git`, so you can commit one to a project (everyone who runs `dtui`
+inside it gets the same setup) or put one in `~` as a personal default.
+**Every key is optional, and no file at all is fine.**
 
 `.dtui.yaml` is not dtctl's `.dtctl.yaml`: it never defines a context, URL
 or credentials. It only selects an existing dtctl context (by `environment`)
@@ -299,6 +315,22 @@ segments:
       environment: [production]    # list of values per variable name
     primary-tags:                   # extra columns, active only with this segment
       - payment-region
+
+# presets — named facet/search sets for one catalog view. Never auto-applied;
+# select with `dtui --preset <name>` or `:preset <name>`. W in the facet
+# manager saves to ~/.local/state/dtui/presets/<context>.yaml (one file per
+# dtctl context) instead of this file.
+presets:
+  payments-errors:
+    view: logs
+    timeframe: 2h
+    facets:
+      - field: loglevel
+        value: ERROR
+      - field: k8s.namespace.name
+        value: payments
+    searches:
+      - timeout
 ```
 
 | Key | Type | Description |
@@ -312,6 +344,11 @@ segments:
 | `segments[].segment` | string | Segment name or UID. Required in the map form (the bare-string form sets only this). Unknown or ambiguous names warn instead of guessing. |
 | `segments[].variables` | map of lists | Pre-bound values for the segment's variables; each variable needs at least one value. |
 | `segments[].primary-tags` | list of strings | Extra tag columns for this segment, added to the global `primary-tags` (up to 5 per list). |
+| `presets` | map | Named facet presets. Keys are kebab-case names. Not applied until `--preset` / `:preset`. |
+| `presets.*.view` | string | Catalog view the preset opens (required). |
+| `presets.*.timeframe` | string | Optional window override (`2h`, `7d`, …). |
+| `presets.*.facets` | list | Server-side `field`/`value` filters (max 10). At least one facet or search is required. |
+| `presets.*.searches` | list of strings | Server-side `/` search terms. |
 
 </details>
 

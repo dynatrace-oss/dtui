@@ -129,6 +129,27 @@ func ParseTimeframe(label string) (Timeframe, bool) {
 	return Timeframe{Label: label, Dur: time.Duration(n) * unit}, true
 }
 
+// AbsoluteTimeframe builds a fixed window (the CLI --from/--to). A zero to
+// is open-ended (runs to now). The label is display-only and in UTC, so it
+// matches the instants an investigation quotes.
+func AbsoluteTimeframe(from, to, now time.Time) Timeframe {
+	from, to = from.UTC(), to.UTC()
+	tf := Timeframe{From: from, To: to}
+	end := "now"
+	switch {
+	case to.IsZero():
+		tf.Dur = now.Sub(from)
+	case to.Format(time.DateOnly) == from.Format(time.DateOnly):
+		end = to.Format("15:04")
+		tf.Dur = to.Sub(from)
+	default:
+		end = to.Format("2006-01-02 15:04")
+		tf.Dur = to.Sub(from)
+	}
+	tf.Label = from.Format("2006-01-02 15:04") + "→" + end + " UTC"
+	return tf
+}
+
 // Scope carries the context every query composes: the entity the user is
 // standing on (nil = unscoped) and the global timeframe. Drill-down
 // navigation fills Entity so signal views are never opened unbounded.

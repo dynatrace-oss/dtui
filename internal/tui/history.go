@@ -51,7 +51,32 @@ type historyEntry struct {
 	Stack     []pageRef `json:"stack"`
 	Context   string    `json:"context,omitempty"`   // dtctl context — entity ids are env-specific
 	Timeframe string    `json:"timeframe,omitempty"` // global window label at visit
-	Visited   time.Time `json:"visited"`
+	// From/To pin an absolute window (`dtui --from/--to`); nil for a relative
+	// one, so files written before them still read as their label.
+	From    *time.Time `json:"from,omitempty"`
+	To      *time.Time `json:"to,omitempty"`
+	Visited time.Time  `json:"visited"`
+}
+
+// timeframe is the window the entry was visited with; ok is false when its
+// label no longer parses (the restore then keeps the session window).
+func (e historyEntry) timeframe() (catalog.Timeframe, bool) {
+	if e.From != nil {
+		var to time.Time
+		if e.To != nil {
+			to = *e.To
+		}
+		return catalog.AbsoluteTimeframe(*e.From, to, time.Now()), true
+	}
+	return catalog.ParseTimeframe(e.Timeframe)
+}
+
+// windowLabel is the entry's window as the header shows it.
+func (e historyEntry) windowLabel() string {
+	if tf, ok := e.timeframe(); ok && tf.Absolute() {
+		return "window " + tf.Label
+	}
+	return "last " + e.Timeframe
 }
 
 // trail renders the entry as its breadcrumb labels.
@@ -127,7 +152,7 @@ func loadHistory(path, ctx string) *historyStore {
 
 // record snapshots a stack as the most recent entry, replacing any older
 // entry with the same signature and pruning to the cap.
-func (h *historyStore) record(stack []viewModel, tfLabel string) {
+func (h *historyStore) record(stack []viewModel, tf catalog.Timeframe) {
 	var refs []pageRef
 	for _, v := range stack {
 		if ref, ok := pageRefOf(v); ok {
@@ -137,7 +162,15 @@ func (h *historyStore) record(stack []viewModel, tfLabel string) {
 	if len(refs) == 0 {
 		return
 	}
-	entry := historyEntry{Stack: refs, Context: h.ctx, Timeframe: tfLabel, Visited: time.Now().UTC()}
+	entry := historyEntry{Stack: refs, Context: h.ctx, Timeframe: tf.Label, Visited: time.Now().UTC()}
+	if tf.Absolute() {
+		from := tf.From.UTC()
+		entry.From = &from
+		if !tf.To.IsZero() {
+			to := tf.To.UTC()
+			entry.To = &to
+		}
+	}
 	sig := entry.signature()
 	kept := make([]historyEntry, 0, len(h.entries)+1)
 	kept = append(kept, entry)
@@ -295,10 +328,7 @@ var historyCodecs = []historyCodec{
 		make: func(a *app, ref pageRef, tf catalog.Timeframe) (viewModel, error) {
 			v := newQueryView(a.ds, ref.DQL, tf, a.qhist)
 			if ref.DQL != "" {
-				// Arrive on results, not the editor: Init re-runs a submitted query.
-				v.current = ref.DQL
-				v.editing = false
-				v.editor.Blur()
+				v.submitted(ref.DQL)
 			}
 			return v, nil
 		}},
@@ -478,7 +508,7 @@ func (a *app) viewFromRef(ref pageRef, tf catalog.Timeframe) (viewModel, error) 
 
 // recordHistory snapshots the current stack into the persistent history.
 func (a *app) recordHistory() {
-	a.hist.record(a.stack, a.tf.Label)
+	a.hist.record(a.stack, a.tf)
 	a.hist.save()
 }
 
@@ -544,12 +574,9 @@ func (p *historyPicker) HandleKey(msg tea.KeyMsg) tea.Cmd {
 // restoreEntry rebuilds a trail's whole stack (so esc walks back through it)
 // and refetches every level; the entry's timeframe is restored globally.
 func (a *app) restoreEntry(entry historyEntry) tea.Cmd {
-	tf, tfIdx := a.tf, -1
-	for i, t := range catalog.Timeframes {
-		if t.Label == entry.Timeframe {
-			tf, tfIdx = t, i
-			break
-		}
+	tf, ok := entry.timeframe()
+	if !ok {
+		tf = a.tf
 	}
 	var stack []viewModel
 	for _, ref := range entry.Stack {
@@ -569,7 +596,7 @@ func (a *app) restoreEntry(entry historyEntry) tea.Cmd {
 	for _, v := range stack {
 		cmds = append(cmds, v.Update(size), v.Init())
 	}
-	if tfIdx >= 0 && tf.Label != a.tf.Label {
+	if ok && tf != a.tf {
 		a.tf = tf
 		// Covered views keep the window the header advertises (setTimeframe
 		// semantics), so the toggled-away stack refreshes too.
@@ -587,18 +614,21 @@ func (p *historyPicker) View(width, height int) string {
 	var b strings.Builder
 	b.WriteString(theme.OverlayTitle.Render("history") + "\n\n")
 	ageW, trailW, tfW := 5, 58, 8
+	for _, e := range p.list {
+		tfW = max(tfW, len([]rune(e.windowLabel())))
+	}
 	rowW := ageW + trailW + tfW + 3
 	limit := max(height-8, 4)
 	overlayRows(&b, len(p.list), p.sel, limit, func(i int) string {
 		e := p.list[i]
 		age := catalog.FormatDuration(time.Since(e.Visited))
 		if i == p.sel {
-			row := pad(age, ageW) + " " + pad(e.trail(), trailW) + " " + pad("last "+e.Timeframe, tfW)
+			row := pad(age, ageW) + " " + pad(e.trail(), trailW) + " " + pad(e.windowLabel(), tfW)
 			return theme.Selected.Render(pad(" "+row, rowW))
 		}
 		return " " + theme.Dim.Render(pad(age, ageW)) + " " +
 			theme.HeaderVal.Render(pad(e.trail(), trailW)) + " " +
-			theme.CrumbDim.Render(pad("last "+e.Timeframe, tfW))
+			theme.CrumbDim.Render(pad(e.windowLabel(), tfW))
 	})
 	b.WriteString("\n" + theme.Dim.Render("enter restore · j/k move · esc close — survives restarts"))
 	return centerOverlay(width, height, b.String())

@@ -120,6 +120,25 @@ func TestFacetTypedFieldEscapeHatch(t *testing.T) {
 	}
 }
 
+func TestFacetValueStageTypesWARN(t *testing.T) {
+	a := testApp(t, "hosts")
+	seedRows(t, a, []map[string]any{hostRow()})
+	tv := a.top().(*tableView)
+	press(a, key("f"))
+	typeText(a, "zzznotasampledfield")
+	press(a, key("enter"))
+	if tv.facetMode != facetValueStage {
+		t.Fatalf("mode=%d, want value stage", tv.facetMode)
+	}
+	typeText(a, "WARN")
+	if a.overlay != nil {
+		t.Fatalf("W opened a save overlay: %T", a.overlay)
+	}
+	if tv.facetInput.Value() != "WARN" {
+		t.Errorf("facet value = %q, want WARN", tv.facetInput.Value())
+	}
+}
+
 func TestFacetPickerFlow(t *testing.T) {
 	a := testApp(t, "hosts")
 	seedRows(t, a, []map[string]any{hostRow()})

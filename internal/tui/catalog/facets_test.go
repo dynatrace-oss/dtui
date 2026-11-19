@@ -254,11 +254,62 @@ func TestBucketEligible(t *testing.T) {
 		// summarize aggregates the field away; a fields projection drops it.
 		{"fetch security.events, from:now() - 2h\n| summarize x = count(), by:{id}\n| limit 100", false},
 		{"fetch logs, from:now() - 2h\n| fields timestamp, content\n| limit 100", false},
+		// A hand-typed one-liner (query editor, dtui --dql) is judged per stage.
+		{"fetch logs, from:now()-30m | summarize count(), by:{loglevel}", false},
+		{"fetch logs | fields timestamp", false},
+		{"fetch logs, from:now()-30m | filter content == \"a | summarize b\"", true},
 	}
 	for _, tt := range tests {
 		if got := BucketEligible(tt.dql); got != tt.want {
 			t.Errorf("BucketEligible(%q) = %v, want %v", tt.dql, got, tt.want)
 		}
+	}
+}
+
+func TestStageLines(t *testing.T) {
+	tests := []struct{ in, want string }{
+		{"fetch logs | filter a == 1 | limit 5", "fetch logs\n| filter a == 1\n| limit 5"},
+		{"fetch logs\n  | sort timestamp desc\n| limit 5", "fetch logs\n| sort timestamp desc\n| limit 5"},
+		{`fetch logs | filter content == "x | y" | limit 1`, "fetch logs\n| filter content == \"x | y\"\n| limit 1"},
+		{`fetch logs | filter content == "q\"|" | limit 1`, "fetch logs\n| filter content == \"q\\\"|\"\n| limit 1"},
+		{"fetch logs | fieldsAdd `a|b` = 1", "fetch logs\n| fieldsAdd `a|b` = 1"},
+		{"fetch logs // tail | head\n| limit 1", "fetch logs // tail | head\n| limit 1"},
+		{"fetch logs | lookup [fetch dt.entity.host | fields id], sourceField: h, lookupField: id | limit 1",
+			"fetch logs\n| lookup [fetch dt.entity.host | fields id], sourceField: h, lookupField: id\n| limit 1"},
+		{"fetch logs\n| append [fetch logs\n  | summarize c = count()]\n| limit 1",
+			"fetch logs\n| append [fetch logs | summarize c = count()]\n| limit 1"},
+		{"fetch logs\n| lookup [fetch dt.entity.host // hosts | only\n  | fields id], sourceField: h, lookupField: id",
+			"fetch logs\n| lookup [fetch dt.entity.host | fields id], sourceField: h, lookupField: id"},
+		{"fetch logs | filter in(a, {1,2}\n| limit 1", "fetch logs\n| filter in(a, {1,2}\n| limit 1"},
+		{"fetch logs | filter a == 1)\n| limit 1", "fetch logs\n| filter a == 1)\n| limit 1"},
+	}
+	for _, tt := range tests {
+		if got := StageLines(tt.in); got != tt.want {
+			t.Errorf("StageLines(%q)\n got %q\nwant %q", tt.in, got, tt.want)
+		}
+	}
+}
+
+// A subquery's own projection does not count as the outer pipeline's: the
+// outer fetch keeps its bucket pruning.
+func TestBucketEligibleIgnoresSubquery(t *testing.T) {
+	for _, q := range []string{
+		"fetch logs | lookup [fetch dt.entity.host | fields id, entity.name], sourceField: dt.entity.host, lookupField: id",
+		"fetch logs\n| lookup [fetch dt.entity.host // hosts\n  | fields id], sourceField: dt.entity.host, lookupField: id",
+	} {
+		if !BucketEligible(q) {
+			t.Errorf("BucketEligible(%q) = false, want true", q)
+		}
+	}
+}
+
+// A one-liner keeps injected stages before its summarize: the bucket
+// projection is dropped and searches land right after the source.
+func TestComposeQueryOneLiner(t *testing.T) {
+	got := ComposeQuery("fetch logs, from:now()-30m | summarize count(), by:{loglevel}", []string{"timeout"}, nil, true)
+	want := "fetch logs, from:now()-30m\n| search \"*timeout*\"\n| summarize count(), by:{loglevel}"
+	if got != want {
+		t.Errorf("ComposeQuery one-liner\n got %q\nwant %q", got, want)
 	}
 }
 
@@ -379,6 +430,17 @@ func TestParseFieldsSummarySkipsNullBucket(t *testing.T) {
 // EscapeField must be accessible from other packages (exported wrapper for
 // escapeField). Spot-check a dotted path (no quoting needed) and a
 // colon-delimited name (backtick-quoted).
+func TestSafeFacetField(t *testing.T) {
+	if !SafeFacetField("loglevel") || !SafeFacetField("tags:k8s.labels") {
+		t.Fatal("plain field names must be safe")
+	}
+	for _, s := range []string{"", "a|b", "a`b", "a\nb"} {
+		if SafeFacetField(s) {
+			t.Errorf("SafeFacetField(%q) = true", s)
+		}
+	}
+}
+
 func TestEscapeFieldExported(t *testing.T) {
 	if got := EscapeField("primary_tags.app"); got != "primary_tags.app" {
 		t.Errorf("EscapeField(dotted) = %q, want bare", got)
