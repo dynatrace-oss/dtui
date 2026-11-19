@@ -61,6 +61,13 @@ func (f Facet) fieldExpr() string {
 	return escapeField(f.Field)
 }
 
+// SafeFacetField reports whether s can be pasted into DQL as a backtick-quoted
+// identifier. fieldExpr has no escape for '`', '|', or newlines; an empty
+// string is not a field.
+func SafeFacetField(s string) bool {
+	return strings.TrimSpace(s) != "" && !strings.ContainsAny(s, "`|\n\r")
+}
+
 // Value shapes that pick the exact-facet encoding in Stage. fieldsSummary
 // hands every value over stringified, so the field's server-side type is
 // unknowable here; the shape of the value decides which typed comparisons

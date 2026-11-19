@@ -67,6 +67,7 @@ belongs in a shared file; a third copy is a bug.
 | Modal overlays | `internal/tui/overlay.go` |
 | Deep links into the web UI | `internal/tui/links.go` |
 | Server-side search and facets | `internal/tui/catalog/facets.go` |
+| Facet field safe to paste into DQL | `catalog.SafeFacetField` (`internal/tui/catalog/facets.go`); workspace keeps `unsafeFacetIdent` because it cannot import catalog |
 | Key facts and preview panes | `internal/tui/catalog/detail.go`, `internal/tui/catalog/preview.go` |
 | Timers (tests zero them) | `internal/tui/tick.go` |
 | Text inputs | `internal/tui/input.go` |

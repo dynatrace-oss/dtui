@@ -136,6 +136,33 @@ func deliver(a *app, cmd tea.Cmd) {
 	deliver(a, next)
 }
 
+func TestInitialFacetsFromOptions(t *testing.T) {
+	a, err := newApp(Options{
+		ContextName:     "test",
+		SafetyLevel:     "readonly",
+		InitialView:     "logs",
+		InitialFacets:   []catalog.Facet{{Field: "loglevel", Value: "ERROR"}},
+		InitialSearches: []string{"timeout"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	a.ds.runFn = func(string) ([]map[string]any, error) { return nil, nil }
+	tv, ok := a.top().(*tableView)
+	if !ok {
+		t.Fatalf("top is %T, want *tableView", a.top())
+	}
+	if len(tv.facets) != 1 || tv.facets[0].Field != "loglevel" || tv.facets[0].Value != "ERROR" {
+		t.Errorf("facets = %+v", tv.facets)
+	}
+	if len(tv.searches) != 1 || tv.searches[0] != "timeout" {
+		t.Errorf("searches = %v", tv.searches)
+	}
+	if dql := tv.composeDQL(); !strings.Contains(dql, `loglevel`) || !strings.Contains(dql, "timeout") {
+		t.Errorf("composed DQL missing preset narrowing:\n%s", dql)
+	}
+}
+
 // TestNavigateMsg drives the external deep-link entry point (the wasm host's
 // dtuiNavigate): a NavigateMsg must open the named view with the requested
 // facet composed into the server-side query, and the "trace" pseudo-target must
@@ -236,7 +263,7 @@ func TestNavigateMsg(t *testing.T) {
 			t.Fatalf("should still navigate on the safe facet, top = %T", a.top())
 		}
 		for _, f := range tv.facets {
-			if strings.ContainsAny(f.Field, "`|\n\r") {
+			if !catalog.SafeFacetField(f.Field) {
 				t.Errorf("unsafe facet field survived: %q", f.Field)
 			}
 		}

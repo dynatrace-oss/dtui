@@ -35,6 +35,7 @@ var bespokeSpecs = []*catalog.Spec{
 	{Name: "nav", Aliases: []string{"smartscape", "navigator"}, Desc: "Smartscape topology navigator"},
 	{Name: "segments", Aliases: []string{"seg"}, Desc: "Filter segments — global DQL scope"},
 	{Name: "ctx", Aliases: []string{"context"}, Desc: "Switch dtctl context (session-local)"},
+	{Name: "preset", Desc: "Saved facet presets — list, or :preset <name>"},
 }
 
 // openCmdPalette shows the command bar (':').
@@ -111,6 +112,8 @@ func (p *cmdPalette) HandleKey(msg tea.KeyMsg) tea.Cmd {
 			return a.openSegmentPicker()
 		case "ctx", "context":
 			return a.switchContext(arg)
+		case "preset":
+			return a.applyNamedPreset(arg)
 		}
 		// Honor the highlighted match (WYSIWYG): the picker shows what enter
 		// opens. An exact name/alias Lookup is only the fallback for a token
@@ -152,6 +155,8 @@ func (a *app) openSpec(spec *catalog.Spec, arg string) tea.Cmd {
 		return a.openSegmentPicker()
 	case "ctx":
 		return a.switchContext(arg)
+	case "preset":
+		return a.applyNamedPreset(arg)
 	}
 	return a.jumpTo(spec.Name, arg)
 }
@@ -190,7 +195,7 @@ func (p *cmdPalette) View(width, height int) string {
 			theme.Dim.Render(pad(strings.Join(s.Aliases, " "), aliasW)) + " " +
 			theme.CrumbDim.Render(pad(s.Desc, descW))
 	})
-	b.WriteString("\n" + theme.Dim.Render("tab next · enter open · also :history :trace <id>"))
+	b.WriteString("\n" + theme.Dim.Render("tab next · enter open · also :history :trace <id> :preset"))
 	return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Position(0.2),
 		theme.OverlayBox.Render(b.String()))
 }

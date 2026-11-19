@@ -493,7 +493,7 @@ func (v *tableView) Hints() []keyHint {
 	case facetFieldStage:
 		hints := []keyHint{{"type", "find attribute"}, {"↑/↓", "move"}, {"enter", "add / edit"}}
 		if len(v.searches)+len(v.facets) > 0 {
-			hints = append(hints, keyHint{"ctrl+x", "remove"})
+			hints = append(hints, keyHint{"ctrl+x", "remove"}, keyHint{"W", "save preset"})
 		}
 		return append(hints, keyHint{"esc", "close"})
 	case facetValueStage:
@@ -544,7 +544,7 @@ func (v *tableView) Hints() []keyHint {
 		hints = append(hints, keyHint{"f", "facets"})
 	}
 	if len(v.searches) > 0 || len(v.facets) > 0 {
-		hints = append(hints, keyHint{"F", "clear facets"})
+		hints = append(hints, keyHint{"F", "clear facets"}, keyHint{"W", "save preset"})
 	}
 	hints = append(hints, keyHint{"J/K", "sort"})
 	if v.spec.RawReadable {
@@ -956,6 +956,9 @@ func (v *tableView) handleKey(msg tea.KeyMsg) tea.Cmd {
 		}
 		return v.inspect(rec)
 	default:
+		if isSavePresetKey(msg.String()) {
+			return v.requestSavePreset()
+		}
 		if target, ok := v.spec.Drills[msg.String()]; ok {
 			return v.drill(target)
 		}

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/dynatrace-oss/dtctl/sdk/session"
+	"github.com/dynatrace-oss/dtui/internal/tui/catalog"
 	"github.com/dynatrace-oss/dtui/internal/workspace"
 )
 
@@ -80,6 +81,86 @@ segments:
 	}
 	if got := workspaceNotice(empty); got != "" {
 		t.Errorf("empty workspace notice = %q, want none", got)
+	}
+}
+
+func TestWritePresetListSanitizesValues(t *testing.T) {
+	raw := "ERR\x1b[31mOR"
+	ws := &workspace.Workspace{Presets: map[string]workspace.Preset{
+		"payments-errors": {
+			View:     "logs",
+			Facets:   []workspace.PresetFacet{{Field: "loglevel", Value: raw}},
+			Searches: []string{"a\x07b"},
+		},
+	}}
+	var buf strings.Builder
+	writePresetList(&buf, ws, nil)
+	out := buf.String()
+	if strings.Contains(out, "\x1b") || strings.Contains(out, "\x07") {
+		t.Fatalf("raw control characters leaked:\n%q", out)
+	}
+	if !strings.Contains(out, catalog.SafeText(raw)) {
+		t.Errorf("sanitized facet value missing:\n%s", out)
+	}
+	if !strings.Contains(out, catalog.SafeText("a\x07b")) {
+		t.Errorf("sanitized search missing:\n%s", out)
+	}
+}
+
+func TestListPresetsIsACommand(t *testing.T) {
+	need := map[string]bool{"list-presets": false, "delete-preset": false}
+	for _, c := range rootCmd.Commands() {
+		if _, ok := need[c.Name()]; ok {
+			need[c.Name()] = true
+		}
+	}
+	for name, found := range need {
+		if !found {
+			t.Fatalf("%s must be a cobra subcommand so `dtui --context prod %s` is not parsed as a view", name, name)
+		}
+	}
+}
+
+func TestResolveLaunchNarrowing(t *testing.T) {
+	ws, err := workspace.Load(writeWorkspaceFile(t, `
+presets:
+  payments-errors:
+    view: logs
+    facets:
+      - field: loglevel
+        value: ERROR
+`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	n, err := resolveLaunchNarrowing("", ws, "payments-errors", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n.view != "logs" || len(n.facets) != 1 || n.facets[0].Value != "ERROR" {
+		t.Errorf("preset launch = %+v", n)
+	}
+	n, err = resolveLaunchNarrowing("logs", ws, "payments-errors", []string{"loglevel=WARN", "k8s.namespace.name=payments"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(n.facets) != 2 || n.facets[0].Value != "WARN" || n.facets[1].Field != "k8s.namespace.name" {
+		t.Errorf("cli facet merge = %+v", n.facets)
+	}
+	if _, err := resolveLaunchNarrowing("pods", ws, "payments-errors", nil); err == nil {
+		t.Fatal("view mismatch should error")
+	}
+	if _, err := resolveLaunchNarrowing("", nil, "payments-errors", nil); err == nil {
+		t.Fatal("missing catalog should error")
+	}
+	if _, err := resolveLaunchNarrowing("query", nil, "", []string{"loglevel=ERROR"}); err == nil {
+		t.Fatal("query --facet should error")
+	}
+	if _, err := resolveLaunchNarrowing("slos", nil, "", []string{"id=x"}); err == nil {
+		t.Fatal("API-backed --facet should error")
+	}
+	if _, err := resolveLaunchNarrowing("nav", nil, "", []string{"id=x"}); err == nil {
+		t.Fatal("nav --facet should error")
 	}
 }
 

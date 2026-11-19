@@ -379,6 +379,17 @@ func TestParseFieldsSummarySkipsNullBucket(t *testing.T) {
 // EscapeField must be accessible from other packages (exported wrapper for
 // escapeField). Spot-check a dotted path (no quoting needed) and a
 // colon-delimited name (backtick-quoted).
+func TestSafeFacetField(t *testing.T) {
+	if !SafeFacetField("loglevel") || !SafeFacetField("tags:k8s.labels") {
+		t.Fatal("plain field names must be safe")
+	}
+	for _, s := range []string{"", "a|b", "a`b", "a\nb"} {
+		if SafeFacetField(s) {
+			t.Errorf("SafeFacetField(%q) = true", s)
+		}
+	}
+}
+
 func TestEscapeFieldExported(t *testing.T) {
 	if got := EscapeField("primary_tags.app"); got != "primary_tags.app" {
 		t.Errorf("EscapeField(dotted) = %q, want bare", got)

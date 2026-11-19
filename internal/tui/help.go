@@ -43,6 +43,8 @@ func (h *helpOverlay) View(width, height int) string {
 			{"H", "history — restore a previous page (survives restarts)"},
 			{"/", "filter table (live) — enter adds it as a server-side search, alt+enter replaces"},
 			{"f / F", "facet manager: add attribute=value filters (fieldsSummary top values, * patterns), edit/remove each / clear all"},
+			{"W", "save a named preset from any DQL table that has facets (empty facet-manager input or the table; a leading W in the attribute search saves instead of typing)"},
+			{":preset", "preset list (name, view, personal/workspace, filters); enter opens, d deletes a personal save; :preset <name> skips the list"},
 			{"J/K", "sort column/direction"},
 			{"j/k ↑/↓ g/G", "move"},
 			{"pgup/pgdn", "page jump (ctrl+d/u half page in inspectors)"},

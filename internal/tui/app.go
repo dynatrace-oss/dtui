@@ -32,9 +32,23 @@ type Options struct {
 	InitialView string // catalog view name or alias; "" = problems
 	// InitialArg is the optional CLI argument for the initial view — only
 	// nav takes one (`dtui nav <type|id|name>`); ignored elsewhere.
-	InitialArg       string
+	InitialArg string
+	// InitialFacets and InitialSearches are server-side narrowing applied to
+	// the first catalog table (CLI --preset / --facet). Ignored when the
+	// initial view is not a table.
+	InitialFacets    []catalog.Facet
+	InitialSearches  []string
 	HistoryPath      string // navigation-history file; "" = in-memory only
 	QueryHistoryPath string // submitted-DQL history file; "" = in-memory only
+	// Presets are named facet sets available to :preset this session
+	// (workspace + personal). SavePreset persists a new one; nil disables save.
+	// DeletePreset removes a personal preset; nil disables delete.
+	// WorkspacePresets are the committed .dtui.yaml copies, used to restore a
+	// name after a personal overlay is deleted.
+	Presets          []NamedPreset
+	WorkspacePresets []NamedPreset
+	SavePreset       func(NamedPreset) error
+	DeletePreset     func(name string) error
 
 	// SegmentSource backs the segment picker and workspace seeding; nil
 	// disables both. Constructed in the dtui main package (no HTTP here).
@@ -78,6 +92,11 @@ type ContextWiring struct {
 	Executor      *exec.DQLExecutor
 	Sources       map[string]Source
 	SegmentSource SegmentLister
+	// Presets, SavePreset and DeletePreset are the new context's: personal
+	// presets are per context, so a switch swaps the :preset list too.
+	Presets      []NamedPreset
+	SavePreset   func(NamedPreset) error
+	DeletePreset func(name string) error
 }
 
 // Run launches the TUI and blocks until the user quits.
@@ -170,8 +189,10 @@ type app struct {
 	// UI-picker segments carry none.
 	segPTags map[string][]string
 
-	hist  *historyStore
-	qhist *queryHistory
+	hist             *historyStore
+	qhist            *queryHistory
+	presets          map[string]NamedPreset
+	workspacePresets map[string]NamedPreset
 
 	status    string
 	statusErr bool
@@ -210,12 +231,24 @@ type spinnerTickMsg struct{}
 
 func newApp(opts Options) (*app, error) {
 	a := &app{
-		opts:        opts,
-		ds:          &dataSource{exec: opts.Executor, sources: opts.Sources},
-		tf:          catalog.DefaultTimeframe,
-		hist:        loadHistory(opts.HistoryPath, opts.ContextName),
-		qhist:       loadQueryHistory(opts.QueryHistoryPath),
-		primaryTags: opts.WorkspacePrimaryTags,
+		opts:             opts,
+		ds:               &dataSource{exec: opts.Executor, sources: opts.Sources},
+		tf:               catalog.DefaultTimeframe,
+		hist:             loadHistory(opts.HistoryPath, opts.ContextName),
+		qhist:            loadQueryHistory(opts.QueryHistoryPath),
+		primaryTags:      opts.WorkspacePrimaryTags,
+		presets:          map[string]NamedPreset{},
+		workspacePresets: map[string]NamedPreset{},
+	}
+	for _, p := range opts.Presets {
+		if p.Name != "" {
+			a.presets[p.Name] = p
+		}
+	}
+	for _, p := range opts.WorkspacePresets {
+		if p.Name != "" {
+			a.workspacePresets[p.Name] = p
+		}
 	}
 	if tf, ok := catalog.ParseTimeframe(opts.InitialTimeframe); ok {
 		a.tf = tf
@@ -231,6 +264,14 @@ func newApp(opts Options) (*app, error) {
 	// `dtui nav <arg>` — same routing as the :nav command-bar argument.
 	if _, isNav := initial.(*navView); isNav && strings.TrimSpace(opts.InitialArg) != "" {
 		initial = a.navViewFor(strings.TrimSpace(opts.InitialArg))
+	}
+	if tv, ok := initial.(*tableView); ok {
+		if len(opts.InitialFacets) > 0 {
+			tv.facets = opts.InitialFacets
+		}
+		if len(opts.InitialSearches) > 0 {
+			tv.searches = opts.InitialSearches
+		}
 	}
 	a.stack = []viewModel{initial}
 	return a, nil
@@ -421,6 +462,9 @@ func (a *app) dispatch(msg tea.Msg) tea.Cmd {
 
 	case NavigateMsg:
 		return a.navigateExternal(msg)
+
+	case requestSavePresetMsg:
+		return a.openPresetSave(msg)
 
 	case inspectMsg:
 		return a.navigate(newInspectorView(a.ds, msg.title, msg.rec), false)
@@ -739,7 +783,7 @@ func (a *app) navigateExternal(msg NavigateMsg) tea.Cmd {
 		// break out of the identifier and inject pipeline stages. Values are always
 		// %q-quoted string literals, so only the field is a breakout vector; drop
 		// any field that carries one of those characters rather than emit unsafe DQL.
-		if strings.ContainsAny(f.Field, "`|\n\r") {
+		if !catalog.SafeFacetField(f.Field) {
 			warn = statusErr(fmt.Sprintf("navigate: dropping facet with unsafe field %q", f.Field))
 			continue
 		}
@@ -857,6 +901,13 @@ func (a *app) handleCtxSwitched(msg ctxSwitchedMsg) tea.Cmd {
 	a.segErr = ""
 	a.overlay = nil            // an open picker would show the old tenant's rows
 	a.hist.ctx = w.ContextName // H now records and lists the new context
+	a.opts.SavePreset, a.opts.DeletePreset = w.SavePreset, w.DeletePreset
+	a.presets = map[string]NamedPreset{}
+	for _, p := range w.Presets {
+		if p.Name != "" {
+			a.presets[p.Name] = p
+		}
+	}
 	a.updatePrimaryTags()
 	cmd := a.navigate(newHomeView(a.ds, a.tf), true)
 	a.prev = nil // '-' must not resurrect the old tenant's views
