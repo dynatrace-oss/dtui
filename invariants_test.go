@@ -1,6 +1,7 @@
 package main
 
 import (
+	"go/ast"
 	"go/parser"
 	"go/token"
 	"io/fs"
@@ -64,6 +65,36 @@ func TestTUIHasNoDirectTenantAccess(t *testing.T) {
 				t.Errorf("%s imports %s: only pkg/exec and pkg/output are allowed in internal/tui", file, imp)
 			}
 		}
+	}
+}
+
+// TestTUIOpensNoListener pins remote requests' shape (ADR-0019): the
+// transport lives in the main package, and internal/tui only exposes
+// Remote, which carries a page and an optional preset name.
+func TestTUIOpensNoListener(t *testing.T) {
+	err := filepath.WalkDir("internal/tui", func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+			return err
+		}
+		f, err := parser.ParseFile(token.NewFileSet(), path, nil, 0)
+		if err != nil {
+			return err
+		}
+		ast.Inspect(f, func(n ast.Node) bool {
+			sel, ok := n.(*ast.SelectorExpr)
+			if !ok {
+				return true
+			}
+			if pkg, ok := sel.X.(*ast.Ident); ok && pkg.Name == "net" &&
+				(strings.HasPrefix(sel.Sel.Name, "Listen") || strings.HasPrefix(sel.Sel.Name, "Dial")) {
+				t.Errorf("%s uses net.%s: internal/tui must not listen or dial; serve remote navigation from the main package", path, sel.Sel.Name)
+			}
+			return true
+		})
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 

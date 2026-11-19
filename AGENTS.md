@@ -25,6 +25,7 @@ A PR that trips one of these is wrong, not the check.
 | **No HTTP inside `internal/tui`.** API-backed views take injected `Source` closures built in `sources.go` (and `cmd/web/sources.go` for the browser build). | [ADR-0011](docs/adr/0011-strictly-read-only.md) | `TestTUIHasNoDirectTenantAccess` |
 | Only the main package and `cmd/web` import `internal/tui`. | layering | `TestOnlyEntryPointsImportTUI` |
 | `internal/tui/catalog` is declarative data: no terminal framework, no module-internal imports. | [ADR-0003](docs/adr/0003-declarative-view-catalog.md) | `TestCatalogIsFrameworkFree` |
+| Agents reach a running TUI only through `dtui send` / `save-preset`: a pushed page or a `W`-equivalent personal preset save, never a context switch or tenant write; the socket is served by the main package, never `internal/tui`. | [ADR-0019](docs/adr/0019-agents-may-navigate-a-listening-tui.md) | `TestTUIOpensNoListener`; review |
 | `internal/workspace` never reaches a tenant and holds no credentials; dtctl owns configuration. | [ADR-0005](docs/adr/0005-dtctl-owns-configuration.md) | `TestWorkspaceHasNoTenantAccess` |
 | **DQL is the substrate.** New views are catalog `Spec`s, not bespoke screens; a bespoke screen needs an ADR. | [ADR-0001](docs/adr/0001-dql-is-the-substrate.md) | review |
 | Every feature passes the six vision gates; the anti-goals are the governance gate. Every view has both exits (`c`, `o`) and fits the query budget. | [vision.md](docs/design/vision.md), [ADR-0013](docs/adr/0013-query-budget.md) | `TestEveryViewHasBothExits`, `TestOpeningAViewFitsQueryBudget`; PR template; review |
@@ -67,6 +68,7 @@ belongs in a shared file; a third copy is a bug.
 | Modal overlays | `internal/tui/overlay.go` |
 | Deep links into the web UI | `internal/tui/links.go` |
 | Server-side search and facets | `internal/tui/catalog/facets.go` |
+| Facet field safe to paste into DQL | `catalog.SafeFacetField` (`internal/tui/catalog/facets.go`); workspace keeps `unsafeFacetIdent` because it cannot import catalog |
 | Key facts and preview panes | `internal/tui/catalog/detail.go`, `internal/tui/catalog/preview.go` |
 | Timers (tests zero them) | `internal/tui/tick.go` |
 | Text inputs | `internal/tui/input.go` |

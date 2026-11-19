@@ -41,7 +41,12 @@ func TestSamplerDefaultsToTimestampSort(t *testing.T) {
 // TestRecordsCommandRoutesToTables: the no-argument record sampler was a
 // duplicate of the tables browser — the command-bar jump lands there instead.
 func TestRecordsCommandRoutesToTables(t *testing.T) {
-	a := testApp(t, "records")
+	a := testApp(t, "home")
+	press(a, key(":"))
+	for _, r := range "records" {
+		press(a, key(string(r)))
+	}
+	press(a, key("enter"))
 	tv, ok := a.top().(*tableView)
 	if !ok || tv.spec.Name != "tables" {
 		t.Fatalf(":records should open the tables browser, top = %v", a.top().Crumb())

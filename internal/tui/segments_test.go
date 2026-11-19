@@ -224,7 +224,7 @@ func TestSegmentsCommandOpensPicker(t *testing.T) {
 
 func TestWorkspaceSegmentSeeding(t *testing.T) {
 	a := testAppSeeded(t, Options{
-		ContextName: "test", SafetyLevel: "readonly", InitialView: "logs",
+		ContextName: "test", SafetyLevel: "readonly", Launch: NavigateMsg{Target: "logs"},
 		SegmentSource: segStubSource(testSegmentList(), nil),
 		WorkspaceSegments: []WorkspaceSegment{
 			{Ref: "uid-b", Variables: []exec.FilterSegmentVariable{{Name: "env", Values: []string{"prod"}}}},
@@ -252,7 +252,7 @@ func TestWorkspaceSegmentSeeding(t *testing.T) {
 func TestWorkspaceSegmentSeedingWarnsUnknownAndAmbiguous(t *testing.T) {
 	list := append(testSegmentList(), SegmentOption{UID: "uid-d", Name: "payments-prod"})
 	a := testAppSeeded(t, Options{
-		ContextName: "test", SafetyLevel: "readonly", InitialView: "logs",
+		ContextName: "test", SafetyLevel: "readonly", Launch: NavigateMsg{Target: "logs"},
 		SegmentSource: segStubSource(list, nil),
 		WorkspaceSegments: []WorkspaceSegment{
 			{Ref: "infra-eu"},
@@ -273,7 +273,7 @@ func TestWorkspaceSegmentSeedingWarnsUnknownAndAmbiguous(t *testing.T) {
 
 func TestWorkspaceSegmentSeedingListFailure(t *testing.T) {
 	a := testAppSeeded(t, Options{
-		ContextName: "test", SafetyLevel: "readonly", InitialView: "logs",
+		ContextName: "test", SafetyLevel: "readonly", Launch: NavigateMsg{Target: "logs"},
 		SegmentSource:     segStubSource(nil, errors.New("HTTP 403: missing storage:filter-segments:read")),
 		WorkspaceSegments: []WorkspaceSegment{{Ref: "payments-prod"}},
 	})
@@ -459,7 +459,7 @@ func altS() tea.KeyMsg {
 
 func TestSegmentsPauseResume(t *testing.T) {
 	a := testAppSeeded(t, Options{
-		ContextName: "test", SafetyLevel: "readonly", InitialView: "logs",
+		ContextName: "test", SafetyLevel: "readonly", Launch: NavigateMsg{Target: "logs"},
 		SegmentSource: segStubSource(testSegmentList(), nil),
 		WorkspaceSegments: []WorkspaceSegment{
 			{Ref: "uid-b", Variables: []exec.FilterSegmentVariable{{Name: "env", Values: []string{"prod"}}}},
@@ -564,7 +564,7 @@ func TestRewriteSegmentVarError(t *testing.T) {
 
 func TestInitialTimeframeFromWorkspace(t *testing.T) {
 	a := testAppSeeded(t, Options{
-		ContextName: "test", SafetyLevel: "readonly", InitialView: "logs",
+		ContextName: "test", SafetyLevel: "readonly", Launch: NavigateMsg{Target: "logs"},
 		InitialTimeframe: "24h",
 	})
 	if a.tf.Label != "24h" {
@@ -579,7 +579,7 @@ func TestInitialTimeframeFromWorkspace(t *testing.T) {
 
 func TestStartupNotice(t *testing.T) {
 	a := testAppSeeded(t, Options{
-		ContextName: "test", SafetyLevel: "readonly", InitialView: "logs",
+		ContextName: "test", SafetyLevel: "readonly", Launch: NavigateMsg{Target: "logs"},
 		StartupNotice: "workspace my-service: 1 segment, last 24h",
 	})
 	if a.statusErr || !strings.Contains(a.status, "workspace my-service") {
@@ -650,7 +650,7 @@ func TestWorkspaceSegmentVariableExpansion(t *testing.T) {
 		HasVariables: true, VariablesQuery: varQuery,
 	}
 	a, err := newApp(Options{
-		ContextName: "test", SafetyLevel: "readonly", InitialView: "logs",
+		ContextName: "test", SafetyLevel: "readonly", Launch: NavigateMsg{Target: "logs"},
 		SegmentSource: segStubSource([]SegmentOption{varSeg}, nil),
 		WorkspaceSegments: []WorkspaceSegment{{
 			Ref: "uid-ns",
@@ -725,7 +725,7 @@ func TestPrimaryTagColumnsFromWorkspace(t *testing.T) {
 	a := testAppSeeded(t, Options{
 		ContextName:          "test",
 		SafetyLevel:          "readonly",
-		InitialView:          "logs",
+		Launch:               NavigateMsg{Target: "logs"},
 		WorkspacePrimaryTags: []string{"app", "env"},
 	})
 	titles := primaryTagColumnTitles(t, a)
@@ -741,7 +741,7 @@ func TestPrimaryTagColumnsSegmentFirstThenGlobal(t *testing.T) {
 	a := testAppSeeded(t, Options{
 		ContextName:          "test",
 		SafetyLevel:          "readonly",
-		InitialView:          "logs",
+		Launch:               NavigateMsg{Target: "logs"},
 		SegmentSource:        segStubSource([]SegmentOption{seg}, nil),
 		WorkspacePrimaryTags: []string{"app", "env"},
 		WorkspaceSegments: []WorkspaceSegment{{
@@ -785,7 +785,7 @@ func TestPrimaryTagFacetCandidatesFromRecord(t *testing.T) {
 	a := testAppSeeded(t, Options{
 		ContextName:          "test",
 		SafetyLevel:          "readonly",
-		InitialView:          "logs",
+		Launch:               NavigateMsg{Target: "logs"},
 		WorkspacePrimaryTags: []string{"app"},
 	})
 	seedRows(t, a, []map[string]any{

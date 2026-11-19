@@ -208,7 +208,7 @@ func main() {
 		SwitchContext: switchContext,
 		Contexts:      names,
 		OpenURL:       openURL,
-		InitialView:   "home",
+		Launch:        tui.NavigateMsg{Target: "home"},
 		// No filesystem in the browser: history stays in memory this session.
 		HistoryPath:      "",
 		QueryHistoryPath: "",

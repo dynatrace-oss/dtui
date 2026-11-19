@@ -61,6 +61,13 @@ func (f Facet) fieldExpr() string {
 	return escapeField(f.Field)
 }
 
+// SafeFacetField reports whether s can be pasted into DQL as a backtick-quoted
+// identifier. fieldExpr has no escape for '`', '|', or newlines; an empty
+// string is not a field.
+func SafeFacetField(s string) bool {
+	return strings.TrimSpace(s) != "" && !strings.ContainsAny(s, "`|\n\r")
+}
+
 // Value shapes that pick the exact-facet encoding in Stage. fieldsSummary
 // hands every value over stringified, so the field's server-side type is
 // unknowable here; the shape of the value decides which typed comparisons
@@ -310,6 +317,99 @@ var bucketTables = map[string]bool{
 	"dt.system.events": true,
 }
 
+// StageLines puts every top-level pipeline stage on its own line. Query
+// composition splices stages by line, so a hand-typed one-liner
+// (`fetch logs | summarize …`, the query editor, `dtui --dql`) would get its
+// injected stages after the summarize. Pipes inside strings, backtick
+// identifiers, // comments and [ ] ( ) { } nesting (subqueries) are not stage
+// boundaries; a subquery is kept on its stage's line so line-based composition
+// never mistakes its inner | fields or | summarize for the outer pipeline's
+// (comments inside a subquery are dropped, its whitespace runs collapse). A
+// query with unbalanced brackets is split ignoring nesting, so Grail's syntax
+// error still points at the user's own line.
+func StageLines(dql string) string {
+	if s, balanced := stageLines(dql, true); balanced {
+		return s
+	}
+	s, _ := stageLines(dql, false)
+	return s
+}
+
+func stageLines(dql string, nest bool) (string, bool) {
+	var out []string
+	var cur strings.Builder
+	flush := func() {
+		if s := strings.TrimSpace(cur.String()); s != "" {
+			out = append(out, s)
+		}
+		cur.Reset()
+	}
+	var quote rune // '"' or '`' while inside a literal
+	comment, escaped := false, false
+	depth := 0
+	for _, r := range dql {
+		switch {
+		case comment:
+			if r != '\n' {
+				if depth > 0 {
+					continue
+				}
+				break
+			}
+			comment = false
+			if depth == 0 {
+				flush()
+				continue
+			}
+			r = ' '
+			if strings.HasSuffix(cur.String(), " ") {
+				continue
+			}
+		case quote != 0:
+			switch {
+			case escaped:
+				escaped = false
+			case r == '\\' && quote == '"':
+				escaped = true
+			case r == quote:
+				quote = 0
+			}
+		case r == '"' || r == '`':
+			quote = r
+		case r == '/' && strings.HasSuffix(cur.String(), "/"):
+			comment = true
+			if depth > 0 {
+				s := strings.TrimSuffix(cur.String(), "/")
+				cur.Reset()
+				cur.WriteString(s)
+				continue
+			}
+		case nest && (r == '[' || r == '(' || r == '{'):
+			depth++
+		case nest && (r == ']' || r == ')' || r == '}'):
+			if depth == 0 {
+				return "", false
+			}
+			depth--
+		case depth > 0:
+			if r == '\n' || r == '\t' {
+				r = ' '
+			}
+			if r == ' ' && strings.HasSuffix(cur.String(), " ") {
+				continue
+			}
+		case r == '\n':
+			flush()
+			continue
+		case r == '|':
+			flush()
+		}
+		cur.WriteRune(r)
+	}
+	flush()
+	return strings.Join(out, "\n"), depth == 0 && quote == 0
+}
+
 // sourceTable returns the table a query's first line fetches ("" when the
 // source is not a fetch command).
 func sourceTable(dql string) string {
@@ -327,6 +427,7 @@ func sourceTable(dql string) string {
 // drops the field (summarize aggregates it away, a fields projection
 // excludes it).
 func BucketEligible(dql string) bool {
+	dql = StageLines(dql)
 	table := sourceTable(dql)
 	if table == "" {
 		return false
@@ -363,6 +464,7 @@ func BucketEligible(dql string) bool {
 // FIELD_DOES_NOT_EXIST (validated live on an Azure-enabled tenant: HOST/AZURE/K8S, 2026-07-24).
 // The bucket | fieldsAdd is additive, so the tag maps still reach the filter.
 func ComposeQuery(dql string, searches []string, facets []Facet, projectBucket bool) string {
+	dql = StageLines(dql)
 	var bucketFacets []Facet
 	var mapFacets []string // must land before | fields / | summarize projections
 	var tail []string

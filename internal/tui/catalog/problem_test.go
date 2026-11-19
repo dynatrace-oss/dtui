@@ -48,6 +48,27 @@ func TestTimeframeAbsoluteDQL(t *testing.T) {
 	}
 }
 
+func TestAbsoluteTimeframe(t *testing.T) {
+	from := time.Date(2026, 7, 8, 9, 45, 0, 0, time.FixedZone("CEST", 2*3600))
+	now := from.Add(3 * time.Hour)
+	cases := []struct {
+		name  string
+		to    time.Time
+		label string
+		dur   time.Duration
+	}{
+		{"same day", from.Add(time.Hour), "2026-07-08 07:45→08:45 UTC", time.Hour},
+		{"across days", from.Add(24 * time.Hour), "2026-07-08 07:45→2026-07-09 07:45 UTC", 24 * time.Hour},
+		{"open-ended", time.Time{}, "2026-07-08 07:45→now UTC", 3 * time.Hour},
+	}
+	for _, c := range cases {
+		tf := AbsoluteTimeframe(from, c.to, now)
+		if tf.Label != c.label || tf.Dur != c.dur || !tf.Absolute() || tf.To.IsZero() != c.to.IsZero() {
+			t.Errorf("%s: got %+v, want label %q dur %v", c.name, tf, c.label, c.dur)
+		}
+	}
+}
+
 func TestFloorTimeframeKeepsAbsoluteWindows(t *testing.T) {
 	abs := Timeframe{From: time.Date(2026, 7, 8, 7, 45, 0, 0, time.UTC), Dur: time.Minute}
 	if got := floorTimeframe(abs, 24*time.Hour, "24h"); got != abs.DQL() {

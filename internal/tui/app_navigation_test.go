@@ -3,6 +3,7 @@ package tui
 import (
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
@@ -100,6 +101,56 @@ func TestCommandBarArgsPrefillFilter(t *testing.T) {
 	tv, ok := a.top().(*tableView)
 	if !ok || tv.spec.Name != "pods" || tv.filter != "checkout" {
 		t.Fatalf("':pods checkout' → %v filter %q", a.top().Crumb(), tv.filter)
+	}
+}
+
+// `:query <dql>` runs the query, keeping whitespace inside string literals,
+// and takes DQL as long as the query editor does.
+func TestCommandBarQueryRunsDQL(t *testing.T) {
+	long := `fetch logs | filter content == "a  b" | filter k8s.namespace.name == "checkout" and loglevel == "ERROR" | sort timestamp desc | limit 50`
+	for _, dql := range []string{`fetch logs | filter content == "a  b"`, long} {
+		a := testApp(t, "problems")
+		press(a, key(":"))
+		for _, r := range "query " + dql {
+			press(a, key(string(r)))
+		}
+		press(a, key("enter"))
+		qv, ok := a.top().(*queryView)
+		if !ok || qv.editing || qv.DQL() != dql {
+			t.Fatalf("':query <dql>' → %T %q", a.top(), a.top().(dqlProvider).DQL())
+		}
+	}
+}
+
+// The editor's limit is the query's, through either alias: a query at the
+// limit runs whole (and stays whole when edited), one past it is refused.
+func TestCommandBarQueryLengthBoundary(t *testing.T) {
+	atLimit := "fetch logs | filter content == \"" + strings.Repeat("x", maxDQLChars-33) + "\""
+	if utf8.RuneCountInString(atLimit) != maxDQLChars {
+		t.Fatalf("fixture is %d chars", utf8.RuneCountInString(atLimit))
+	}
+	for _, alias := range []string{"query", "dql"} {
+		a := testApp(t, "problems")
+		a.openCmdPalette()
+		p := a.overlay.(*cmdPalette)
+		p.input.SetValue(alias + " " + atLimit)
+		press(a, key("enter"))
+		qv, ok := a.top().(*queryView)
+		if !ok || qv.DQL() != atLimit || qv.editor.Value() != atLimit {
+			t.Fatalf(":%s at the limit → %T, ran %d / editor %d chars", alias, a.top(), len(qv.DQL()), len(qv.editor.Value()))
+		}
+
+		a = testApp(t, "problems")
+		a.openCmdPalette()
+		p = a.overlay.(*cmdPalette)
+		p.input.SetValue(alias + " " + atLimit + "y")
+		press(a, key("enter"))
+		if _, ok := a.top().(*queryView); ok {
+			t.Errorf(":%s one past the limit opened the query view", alias)
+		}
+		if !strings.Contains(a.status, "at most") {
+			t.Errorf(":%s one past the limit: status %q, want the limit named", alias, a.status)
+		}
 	}
 }
 

@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -339,5 +340,179 @@ func TestDiscoverAbsent(t *testing.T) {
 	}
 	if w != nil {
 		t.Fatalf("Discover = %+v, want nil (no file anywhere above %s)", w, dir)
+	}
+}
+
+func TestLoadPresets(t *testing.T) {
+	path := writeFile(t, t.TempDir(), `
+version: 1
+presets:
+  payments-errors:
+    view: logs
+    timeframe: 2h
+    facets:
+      - field: loglevel
+        value: ERROR
+      - field: k8s.namespace.name
+        value: payments
+    searches:
+      - timeout
+  pods-checkout:
+    view: pods
+    facets:
+      - field: k8s.namespace.name
+        value: checkout
+`)
+	w, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, ok := w.LookupPreset("payments-errors")
+	if !ok {
+		t.Fatal("payments-errors missing")
+	}
+	if p.View != "logs" || p.Timeframe != "2h" || len(p.Facets) != 2 || p.Facets[0].Field != "loglevel" {
+		t.Errorf("payments-errors = %+v", p)
+	}
+	if len(p.Searches) != 1 || p.Searches[0] != "timeout" {
+		t.Errorf("searches = %v", p.Searches)
+	}
+	names := w.PresetNames()
+	if len(names) != 2 || names[0] != "payments-errors" || names[1] != "pods-checkout" {
+		t.Errorf("PresetNames = %v", names)
+	}
+	if _, ok := w.LookupPreset("missing"); ok {
+		t.Error("LookupPreset(missing) should fail")
+	}
+}
+
+func TestLoadPresetErrors(t *testing.T) {
+	cases := []struct {
+		name    string
+		content string
+		wantErr string
+	}{
+		{"bad name", "presets:\n  LimaErrors:\n    view: logs\n    facets:\n      - field: a\n        value: b\n", "kebab-case"},
+		{"missing view", "presets:\n  payments-errors:\n    facets:\n      - field: a\n        value: b\n", "view is required"},
+		{"empty narrowing", "presets:\n  payments-errors:\n    view: logs\n", "at least one facet or search"},
+		{"missing facet value", "presets:\n  payments-errors:\n    view: logs\n    facets:\n      - field: loglevel\n", "field and value"},
+		{"unsafe field", "presets:\n  payments-errors:\n    view: logs\n    facets:\n      - field: \"a|b\"\n        value: x\n", "unsafe"},
+		{"unsafe map-field", "presets:\n  payments-errors:\n    view: logs\n    facets:\n      - field: labels\n        value: x\n        map-field: \"tags:`k8s\"\n        map-key: app\n", "unsafe"},
+		{"unsafe map-key", "presets:\n  payments-errors:\n    view: logs\n    facets:\n      - field: labels\n        value: x\n        map-field: tags:k8s.labels\n        map-key: \"a|b\"\n", "unsafe"},
+		{"bad timeframe", "presets:\n  payments-errors:\n    view: logs\n    timeframe: 2w\n    facets:\n      - field: a\n        value: b\n", "expected <n>m"},
+		{"map-field without key", "presets:\n  payments-errors:\n    view: logs\n    facets:\n      - field: labels\n        value: x\n        map-field: tags:k8s.labels\n", "map-key"},
+		{"empty search", "presets:\n  payments-errors:\n    view: logs\n    searches:\n      - \"\"\n", "empty search"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := Load(writeFile(t, t.TempDir(), tc.content))
+			if err == nil {
+				t.Fatal("expected error, got nil")
+			}
+			if !strings.Contains(err.Error(), tc.wantErr) {
+				t.Errorf("error %q does not contain %q", err, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestLoadTooManyPresetFacets(t *testing.T) {
+	var b strings.Builder
+	b.WriteString("presets:\n  payments-errors:\n    view: logs\n    facets:\n")
+	for i := 0; i < MaxFacetsPerPreset+1; i++ {
+		fmt.Fprintf(&b, "      - field: f%d\n        value: v\n", i)
+	}
+	_, err := Load(writeFile(t, t.TempDir(), b.String()))
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "max") {
+		t.Errorf("error %q does not contain max", err)
+	}
+}
+
+func TestSavePresetRoundTrip(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "presets.yaml")
+	p := Preset{
+		View:     "logs",
+		Facets:   []PresetFacet{{Field: "loglevel", Value: "ERROR"}},
+		Searches: []string{"timeout"},
+	}
+	if err := SavePreset(path, "payments-errors", p); err != nil {
+		t.Fatal(err)
+	}
+	w, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, ok := w.LookupPreset("payments-errors")
+	if !ok || got.View != "logs" || len(got.Facets) != 1 || got.Facets[0].Value != "ERROR" {
+		t.Errorf("loaded %+v", got)
+	}
+	p.Facets = []PresetFacet{{Field: "loglevel", Value: "WARN"}}
+	if err := SavePreset(path, "payments-errors", p); err != nil {
+		t.Fatal(err)
+	}
+	w, err = Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, _ = w.LookupPreset("payments-errors")
+	if got.Facets[0].Value != "WARN" {
+		t.Errorf("replace failed: %+v", got)
+	}
+	if err := SavePreset(path, "Not-Kebab", p); err == nil {
+		t.Fatal("expected kebab-case error")
+	}
+}
+
+func TestDeletePresetRoundTrip(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "presets.yaml")
+	p := Preset{View: "logs", Facets: []PresetFacet{{Field: "loglevel", Value: "ERROR"}}}
+	if err := SavePreset(path, "payments-errors", p); err != nil {
+		t.Fatal(err)
+	}
+	if err := SavePreset(path, "checkout-pods", Preset{View: "pods", Facets: []PresetFacet{{Field: "k8s.namespace.name", Value: "checkout"}}}); err != nil {
+		t.Fatal(err)
+	}
+	if err := DeletePreset(path, "payments-errors"); err != nil {
+		t.Fatal(err)
+	}
+	w, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := w.LookupPreset("payments-errors"); ok {
+		t.Fatal("payments-errors still present")
+	}
+	if _, ok := w.LookupPreset("checkout-pods"); !ok {
+		t.Fatal("checkout-pods removed")
+	}
+	if err := DeletePreset(path, "missing"); err == nil {
+		t.Fatal("expected missing-name error")
+	}
+}
+
+func TestMergePresetCatalogPersonalWins(t *testing.T) {
+	project := &Workspace{Presets: map[string]Preset{
+		"shared":  {View: "logs", Facets: []PresetFacet{{Field: "a", Value: "project"}}},
+		"only-ws": {View: "pods", Facets: []PresetFacet{{Field: "b", Value: "ws"}}},
+	}}
+	personal := &Workspace{Presets: map[string]Preset{
+		"shared":  {View: "logs", Facets: []PresetFacet{{Field: "a", Value: "personal"}}},
+		"only-me": {View: "logs", Facets: []PresetFacet{{Field: "c", Value: "me"}}},
+	}}
+	merged := MergePresetCatalog(project, personal)
+	if v, _ := merged.LookupPreset("shared"); v.Facets[0].Value != "personal" {
+		t.Errorf("shared = %+v, want personal overlay", v)
+	}
+	if _, ok := merged.LookupPreset("only-ws"); !ok {
+		t.Error("missing only-ws")
+	}
+	if _, ok := merged.LookupPreset("only-me"); !ok {
+		t.Error("missing only-me")
+	}
+	if MergePresetCatalog(nil, nil).Presets == nil {
+		t.Error("merge of nils should still have a map")
 	}
 }

@@ -35,6 +35,7 @@ var bespokeSpecs = []*catalog.Spec{
 	{Name: "nav", Aliases: []string{"smartscape", "navigator"}, Desc: "Smartscape topology navigator"},
 	{Name: "segments", Aliases: []string{"seg"}, Desc: "Filter segments — global DQL scope"},
 	{Name: "ctx", Aliases: []string{"context"}, Desc: "Switch dtctl context (session-local)"},
+	{Name: "preset", Desc: "Saved facet presets — list, or :preset <name>"},
 }
 
 // openCmdPalette shows the command bar (':').
@@ -42,7 +43,7 @@ func (a *app) openCmdPalette() tea.Cmd {
 	ci := newTextInput()
 	ci.Prompt = ":"
 	ci.PromptStyle = theme.Crumb
-	ci.CharLimit = 64
+	ci.CharLimit = len("query ") + maxDQLChars + 1 // +1 so an over-long query is reported, not silently cut
 	ci.Focus()
 	p := &cmdPalette{app: a, input: ci}
 	p.updateMatches()
@@ -98,8 +99,13 @@ func (p *cmdPalette) HandleKey(msg tea.KeyMsg) tea.Cmd {
 			return a.openHelp()
 		case "history", "hist":
 			return a.openHistory()
-		case "home", "query", "dql":
+		case "home":
 			return a.jumpTo(input[0], "")
+		case "query", "dql":
+			// The raw remainder, not the re-joined fields: whitespace inside
+			// a DQL string literal is significant.
+			raw := strings.TrimSpace(p.input.Value())
+			return a.openQuery(strings.TrimSpace(strings.TrimPrefix(raw, input[0])))
 		case "nav", "smartscape", "navigator":
 			return a.openNav(arg)
 		case "trace":
@@ -111,6 +117,8 @@ func (p *cmdPalette) HandleKey(msg tea.KeyMsg) tea.Cmd {
 			return a.openSegmentPicker()
 		case "ctx", "context":
 			return a.switchContext(arg)
+		case "preset":
+			return a.applyNamedPreset(arg)
 		}
 		// Honor the highlighted match (WYSIWYG): the picker shows what enter
 		// opens. An exact name/alias Lookup is only the fallback for a token
@@ -144,16 +152,33 @@ func (p *cmdPalette) HandleKey(msg tea.KeyMsg) tea.Cmd {
 // argument narrowing the jump (":pods checkout" pre-fills the filter).
 func (a *app) openSpec(spec *catalog.Spec, arg string) tea.Cmd {
 	switch spec.Name {
-	case "home", "query":
+	case "home":
 		return a.jumpTo(spec.Name, "")
+	case "query":
+		return a.openQuery(arg)
 	case "nav":
 		return a.openNav(arg)
 	case "segments":
 		return a.openSegmentPicker()
 	case "ctx":
 		return a.switchContext(arg)
+	case "preset":
+		return a.applyNamedPreset(arg)
 	}
 	return a.jumpTo(spec.Name, arg)
+}
+
+// openQuery opens the query editor — running dql when given (`:query <dql>`,
+// the command-bar form of `dtui query '<dql>'`).
+func (a *app) openQuery(dql string) tea.Cmd {
+	if dql == "" {
+		return a.jumpTo("query", "")
+	}
+	view, _, err := a.launchView(NavigateMsg{Target: "query", DQL: dql})
+	if err != nil {
+		return statusErr(err.Error())
+	}
+	return a.navigate(view, true)
 }
 
 func (p *cmdPalette) updateMatches() {
@@ -190,7 +215,7 @@ func (p *cmdPalette) View(width, height int) string {
 			theme.Dim.Render(pad(strings.Join(s.Aliases, " "), aliasW)) + " " +
 			theme.CrumbDim.Render(pad(s.Desc, descW))
 	})
-	b.WriteString("\n" + theme.Dim.Render("tab next · enter open · also :history :trace <id>"))
+	b.WriteString("\n" + theme.Dim.Render("tab next · enter open · also :history :trace <id> :query <dql> :preset"))
 	return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Position(0.2),
 		theme.OverlayBox.Render(b.String()))
 }

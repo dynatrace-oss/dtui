@@ -15,7 +15,7 @@ import (
 // testAppHist is testApp with a persistent history file.
 func testAppHist(t *testing.T, initial, histPath string) *app {
 	t.Helper()
-	a, err := newApp(Options{ContextName: "test", SafetyLevel: "readonly", InitialView: initial, HistoryPath: histPath})
+	a, err := newApp(Options{ContextName: "test", SafetyLevel: "readonly", Launch: NavigateMsg{Target: initial}, HistoryPath: histPath})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -232,6 +232,28 @@ func TestHistoryRestoresTimeframe(t *testing.T) {
 	}
 }
 
+// Launch windows outside the picker's presets — absolute, or a custom
+// relative one — come back as recorded, not as the session window.
+func TestHistoryRestoresLaunchWindows(t *testing.T) {
+	from := time.Date(2026, 1, 2, 14, 0, 0, 0, time.UTC)
+	abs := catalog.AbsoluteTimeframe(from, from.Add(time.Hour), time.Now())
+	custom, _ := catalog.ParseTimeframe("45m")
+	for _, tf := range []catalog.Timeframe{abs, custom} {
+		t.Run(tf.Label, func(t *testing.T) {
+			a := testApp(t, "hosts")
+			store := &historyStore{ctx: "test"}
+			store.record([]viewModel{newTableView(a.ds, catalog.Lookup("pods"), catalog.Scope{Timeframe: tf})}, tf)
+			deliver(a, a.restoreEntry(store.entries[0]))
+			if a.tf.Label != tf.Label || !a.tf.From.Equal(tf.From) || !a.tf.To.Equal(tf.To) {
+				t.Fatalf("restored tf = %+v, want %+v", a.tf, tf)
+			}
+			if tv := a.top().(*tableView); tv.scope.Timeframe.Label != tf.Label {
+				t.Fatalf("restored view timeframe = %s, want %s", tv.scope.Timeframe.Label, tf.Label)
+			}
+		})
+	}
+}
+
 func TestHistorySkipsUnrestorablePages(t *testing.T) {
 	a := testApp(t, "hosts")
 	entry := historyEntry{
@@ -275,11 +297,11 @@ func TestHistorySaveMergesConcurrentSessions(t *testing.T) {
 	// Two sessions share the file; each records its own trail. The second
 	// save must union with the first, not clobber it.
 	s1 := loadHistory(path, "test")
-	s1.record([]viewModel{newTableView(&dataSource{}, catalog.Lookup("hosts"), catalog.Scope{Timeframe: catalog.DefaultTimeframe})}, "2h")
+	s1.record([]viewModel{newTableView(&dataSource{}, catalog.Lookup("hosts"), catalog.Scope{Timeframe: catalog.DefaultTimeframe})}, catalog.DefaultTimeframe)
 	s1.save()
 
 	s2 := loadHistory(path, "test") // opened before s1 saved? either way: loaded independently
-	s2.record([]viewModel{newTableView(&dataSource{}, catalog.Lookup("pods"), catalog.Scope{Timeframe: catalog.DefaultTimeframe})}, "2h")
+	s2.record([]viewModel{newTableView(&dataSource{}, catalog.Lookup("pods"), catalog.Scope{Timeframe: catalog.DefaultTimeframe})}, catalog.DefaultTimeframe)
 	s2.entries = s2.entries[:1] // simulate a session that never saw s1's entry
 	s2.save()
 
