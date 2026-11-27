@@ -1,0 +1,11 @@
+goroutine 42 [running]:
+panic({0x10a0b20?, 0xc000012345?})
+	/usr/local/go/src/runtime/panic.go:770 +0x132
+github.com/acme/shop/cart.(*Service).AddItem(0xc000010000, {0x10b1c2d, 0x5})
+	/src/shop/cart/service.go:42 +0x1d
+github.com/acme/shop/api.(*Handler).Post(0xc000020000, {0x1234560, 0xc0000a0000}, 0xc0000b0000)
+	/src/shop/api/handler.go:17 +0x8c
+net/http.HandlerFunc.ServeHTTP(0x10c2d3e?, {0x1234560, 0xc0000a0000}, 0xc0000b0000)
+	/usr/local/go/src/net/http/server.go:2166 +0x29
+created by net/http.(*Server).Serve in goroutine 1
+	/usr/local/go/src/net/http/server.go:3285 +0x4b4

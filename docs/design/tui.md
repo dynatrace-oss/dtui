@@ -1016,6 +1016,12 @@ implementation landed on cheaper, less brittle seams.)
   state). The point is guarding core functionality against visual breakage —
   not pinning every pixel, which is the churn the original design rejected
   goldens for.
+- **Compatibility fixtures**: the one other kind of golden file. It pins an
+  identifier that people or tools keep outside dtui, and the declarations
+  that version of the identifier is computed from, so a change to either is a
+  conscious step. It is not a snapshot of a screen and lives with the package
+  that computes the identifier, not in `internal/tui`
+  ([ADR-0022](../adr/0022-exception-issues-are-a-sampled-grouping.md)).
 - **Datasource tests**: no HTTP anywhere — the `dataSource.runFn` func seam
   replaces the executor, and API-backed views stub the injected `Source`
   closures. Canned rows are injected via `seedRows`.

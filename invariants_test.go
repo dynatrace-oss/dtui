@@ -115,17 +115,61 @@ func TestOnlyEntryPointsImportTUI(t *testing.T) {
 	}
 }
 
+// exckeyPath is the one package of this module the catalog may import: a
+// leaf that computes exception keys from text.
+const exckeyPath = modulePath + "/internal/exckey"
+
 // TestCatalogIsFrameworkFree pins the catalog as declarative data (ADR-0003):
-// no terminal framework and nothing from this module, so a Spec stays a pure
-// value any front end can render and test.
+// no terminal framework and nothing from this module but the exception-key
+// leaf, so a Spec stays a pure value any front end can render and test.
 func TestCatalogIsFrameworkFree(t *testing.T) {
 	for file, imports := range importsByFile(t, "internal/tui/catalog") {
 		for _, imp := range imports {
-			if strings.HasPrefix(imp, "github.com/charmbracelet/") || strings.HasPrefix(imp, modulePath+"/") {
+			if strings.HasPrefix(imp, "github.com/charmbracelet/") || strings.HasPrefix(imp, modulePath+"/") && imp != exckeyPath {
 				t.Errorf("%s imports %s: the catalog is data; rendering and app state live in internal/tui", file, imp)
 			}
 		}
 	}
+}
+
+// exceptionKeyImports are the packages internal/exckey may import: string
+// work and a hash. Nothing in the list reads a file, a clock, the
+// environment or the network, so a key cannot depend on where it is
+// computed. A package that is to join it must be as pure.
+var exceptionKeyImports = []string{
+	"crypto/sha256", "encoding/hex", "net/netip", "regexp", "slices", "sort", "strconv", "strings", "unicode", "unicode/utf8",
+}
+
+// TestExceptionKeyPackageIsALeaf keeps internal/exckey free of this module,
+// of dtctl, of any framework and of every part of the standard library
+// that looks outside the process: the key of an exception depends on the
+// text of its events and on nothing else.
+func TestExceptionKeyPackageIsALeaf(t *testing.T) {
+	for file, imports := range importsByFile(t, "internal/exckey") {
+		for _, imp := range imports {
+			if !exceptionKeyImportAllowed(imp) {
+				t.Errorf("%s imports %s: internal/exckey imports only %s", file, imp, strings.Join(exceptionKeyImports, ", "))
+			}
+		}
+	}
+	for imp, want := range map[string]bool{
+		"strings": true, "unicode/utf8": true, "net/netip": true,
+		"net/http": false, "os": false, "time": false, "math/rand": false, "C": false, "net": false, "unicode/utf16": false,
+		"github.com/dynatrace-oss/dtui/internal/tui/catalog": false,
+	} {
+		if got := exceptionKeyImportAllowed(imp); got != want {
+			t.Errorf("import %s allowed: %v, want %v", imp, got, want)
+		}
+	}
+}
+
+func exceptionKeyImportAllowed(imp string) bool {
+	for _, allowed := range exceptionKeyImports {
+		if imp == allowed {
+			return true
+		}
+	}
+	return false
 }
 
 // TestWorkspaceHasNoTenantAccess pins the workspace file as display defaults

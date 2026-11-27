@@ -1,0 +1,6 @@
+System.InvalidOperationException: Cart 7 is locked
+   at Acme.Shop.CartService.<AddItemAsync>d__12.MoveNext() in /src/shop/CartService.cs:line 42
+--- End of stack trace from previous location ---
+   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
+   at Acme.Shop.CartController.<PostAsync>d__4.MoveNext() in /src/shop/CartController.cs:line 20
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.Execute(ActionContext context)

@@ -1,0 +1,8 @@
+System.FormatException: The input string '7,5' was not in a correct format.
+   at System.Number.ThrowFormatException(ReadOnlySpan`1 value) in /_/src/libraries/System.Private.CoreLib/src/System/Number.Parsing.cs:line 1071
+   at System.Int32.Parse(String s) in /_/src/libraries/System.Private.CoreLib/src/System/Int32.cs:line 130
+   at System.Convert.ToInt32(String value) in /_/src/libraries/System.Private.CoreLib/src/System/Convert.cs:line 1101
+   at System.Threading.Tasks.Task.InnerInvoke()
+   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Threading.Tasks.Task.ExecuteEntryUnsafe(Thread threadPoolThread)
+   at System.Threading.PortableThreadPool.WorkerThread.WorkerThreadStart()

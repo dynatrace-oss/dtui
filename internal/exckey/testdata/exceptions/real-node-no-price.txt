@@ -1,0 +1,5 @@
+TypeError: Cannot read properties of undefined (reading 'cents')
+    at /srv/shop/app/lib/cart.js:9:50
+    at Array.map (<anonymous>)
+    at Cart.total (/srv/shop/app/lib/cart.js:9:18)
+    at checkout (/srv/shop/app/checkout.js:8:15)

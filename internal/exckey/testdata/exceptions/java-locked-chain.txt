@@ -1,0 +1,14 @@
+com.acme.shop.checkout.CheckoutException: checkout failed
+	at com.acme.shop.checkout.CheckoutService.run(CheckoutService.java:30)
+	at com.acme.shop.checkout.CheckoutController.post(CheckoutController.java:12)
+	at java.base/java.lang.Thread.run(Thread.java:833)
+Caused by: java.lang.IllegalStateException: Cart 7 is locked by order 3f2b8c1e-9d4a-4b7c-8e21-0a1b2c3d4e5f
+	at com.acme.shop.cart.CartService.addItem(CartService.java:42)
+	at com.acme.shop.cart.CartService$$FastClassBySpringCGLIB$$1a2b3c4d.invoke(<generated>)
+	at org.springframework.cglib.proxy.MethodProxy.invoke(MethodProxy.java:218)
+	at com.acme.shop.cart.CartService$$EnhancerBySpringCGLIB$$5e6f7a8b.addItem(<generated>)
+	at com.acme.shop.cart.CartController.post(CartController.java:17)
+	at sun.reflect.GeneratedMethodAccessor112.invoke(Unknown Source)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1081)
+	... 1 more

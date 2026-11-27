@@ -1,0 +1,126 @@
+fdcd9cf10f9b2dc3	const ExceptionKeyVersion
+7ff98c62be633fc4	const FingerprintFrames
+db5f196278c8cf9a	const FrameAnonymous
+75cfd5b9c40bb981	const FrameAuto
+2a7ba457616466ad	const RungAppFrames, RungFrames, RungMessage, RungType
+0d33f626634bf732	const StackJava, StackDotNet, StackJS, StackPython, StackGo
+91060a6753d16f13	const dotnetInnerEnd
+23379f089f712f64	const dotnetLambdaMark, dotnetLocalMark, dotnetLocalEnd, dotnetAsyncMark, dotnetAsyncOrdinals, dotnetAsyncEnd, dotnetInterfaceDot, dotnetArity, dotnetUnwrapped
+1dbd793c56756a76	const dotnetMonoOffset
+ee2ec91e3d4628e8	const dotnetNested, dotnetGenerated
+93919b4e3cf3a7f9	const dotnetSibling
+9f9183b6790c990c	const exceptionMessageInput, ExceptionMessageMax, msgIPv6Max, msgIPv6Colons, msgIPv6WordColons, msgMACSeparators, msgPlaceholderMax
+6511a88fc8d4cab7	const fingerprintKeyLen
+0be3ce42046d5fb4	const goGoroutine
+d25c4003fcbc1f21	const goPanicWord, goRuntimePackage
+13a0afea61cdc2a9	const goVendorDir
+93ff8fef9db5608a	const hexLetters, digits, msgControls
+ca69ff57fd2a6d2b	const javaCausePrefix
+4246decaaee06761	const javaFramePrefix
+2d2406db61a3f52b	const javaSuppressedPrefix
+9753a90bf181f7cc	const javaSyntheticClass
+d4727ff604b5e9d7	const javaUnknownSource, javaNotInFile
+9a4a8c14fe76725b	const jsRuntimeScheme, jsDependencyDir
+ccb956b113a3e111	const msgNumberLeads, msgCodeDigits, msgEscape
+12364c2d5b7363e9	const msgNumeral
+32ce4153ff8a92ee	const msgQuoted, msgURL, msgUUID, msgDate, msgMAC, msgIP, msgPath, msgHex, msgID, msgNumber
+ae53d13605172001	const msgQuotes, msgApostrophe, msgEscapingQuotes, msgClosers
+b29bd30168fc254b	const msgWinPathWord, msgWinPathWords
+4337c2001b4d77fc	const pythonFramePrefix, pythonGutter, pythonIndent
+14ebf31c1d78cb21	const pythonStdlibDir
+38572dbe18bb2fa5	const sourceCurrentDir, sourceURL, sourceFileScheme
+405ee81cc12fde3e	const stackVoteLines, stackTextMax, stackLineMax
+83b5dd168ff56a1b	const stackWordEnds
+f6b370e98019e7df	const wordBytes
+15.0.0	unicode.Version
+b3635d365a0f43f2	var deployHomes
+e4510216bc423701	var deployRoots
+ffcd8606722ec0d2	var dotnetClosureRe
+605707ba2a294bee	var dotnetDelegateRe
+d593b7a1bee2f176	var dotnetFrameRe
+606a77113f7a3b69	var dotnetInnerLineRe
+2d8432b67d26e1e7	var dotnetInnerRe
+d5a6d4ca15c96042	var dotnetMainRe
+6fcd57cef7b2c913	var dotnetMonoParamsRe
+df771b28c2809e59	var dotnetPassThrough
+b52bf883845e3239	var dotnetTypeArgsRe
+af36cd4f9845fedd	var dotnetVendorPrefixes
+f0adf6a90bda193b	var goArgsRe
+02bbcc03877b5fc6	var goDependencyRe
+aca5a1c7628ab6b2	var goFileRe
+ba92428f151a8647	var goFileSuffixes
+91fa9fc092450657	var goGeneratedRe
+d28d2de98dfd7427	var goGoroutineRe
+bd5cb2dab2295a66	var goNameRe
+8f88eb56f7b20fc0	var goPanicHeaders
+6c1987a00e232377	var goPanicMarks
+666dc50d3004d22e	var goPanicRe
+aa2cb485bca0e74c	var goPassThrough
+1440cacf7e5eca7e	var goReceiver
+5774bb3ab9f57b0b	var goStdlib
+8120a9c837a40cbd	var goTypeArgsRe
+1c3dac7d188f4126	var goVendorPrefixes
+1ff5ca8d5b5e6913	var javaCauseRe
+3f6b4fda29d96b97	var javaGeneratedRe
+d818a662e2123c43	var javaLambdaRe
+467967a606d47822	var javaLogArchives
+3827da3c0a9ed2bf	var javaMoreRe
+4b9f35365f39dcf5	var javaNoSource
+a83eb73dece7b60f	var javaPassThrough
+d1480b8b600e1ede	var javaProxyPkgRe
+073f52b028af9f0d	var javaProxyRe
+1b605b2e0ecb7452	var javaScalaClassRe
+1e84be1777150b10	var javaScalaMethodRe
+3ba34a941d910148	var javaSourceExtensions
+4cddab68acdd3f44	var javaSyntheticClasses
+2cdaeba123ec7aea	var javaVendorPrefixes
+18cc13e6954d86f1	var jsAliasRe
+2a20b26a3e902e9d	var jsAtSignRe
+389c77fa0c6503b8	var jsBareRe
+7c54456ec3d078b6	var jsCallRe
+9abed484b7e9f3ce	var jsContentHashRe
+3934c0b759fc6ef4	var jsDisplayRe
+bd7d3f925d8cb4e7	var jsIndexRe
+f4a32ed2e82b6eff	var jsLinesRe
+bd9679cbcb4e4662	var jsLocationRe
+93aecd587dee03a1	var jsNoFile
+c975766ad5d68511	var jsPassThrough
+7ac73525b6f267e1	var jsRuntimeFileRe
+2665c76d0111cdc6	var jsSourceFileRe
+657ee187e67cb811	var messageRules
+c46144748cfdf72a	var msgControlRe
+4a2a15eef729e09b	var msgDateRe
+0998c78bb0c07cec	var msgFileNameRe
+2e9eaf0e20f3d7ae	var msgHexAtRe
+b9a004cbcac48ca4	var msgHexLitRe
+d5915a44a2e79eeb	var msgHexRunRe
+9d34338d0b4105f6	var msgIPv4Re
+b31800458cf9cc82	var msgIPv6BracketRe
+7ae7d4aa677de534	var msgIPv6Re
+eb88958d1e12d232	var msgMACRe
+e0188cff3a26bf19	var msgNumberRe
+0fbf172348b90146	var msgNumberText
+1bf19649abaca1fc	var msgPlaceholders
+36207411439c96ce	var msgPrefixedIDRe
+e54fe08c91dbe103	var msgQuotedStateRe
+b5dc00612ce32c5f	var msgURLRe
+95fa6350781d692b	var msgUUIDRe
+60b07b14f9f00dac	var msgUnitText
+3eae5fc0fc8473e4	var msgUnits
+246d1b1e27dc378c	var msgUnixPathRe
+590b91abad6d02aa	var msgWinPathRe
+a231b8c2c60d6c9c	var pythonFrameRe
+4fa9e3e2d46bd00e	var pythonGroupRuleRe
+4ab2df08053537fa	var pythonPackageDirs
+1ffcdc6c270080d6	var pythonPassThrough
+6f58f72e6a2f5011	var pythonRaisedRe
+9c3a15b4780e8f93	var pythonStdlibRe
+91496667064e0825	var pythonTracebacks
+e7b9e14863d4ee69	var sourceOriginRe
+9d184dbfc6ed0efb	var sourceReleaseDirs
+41f8ad2b4552e120	var sourceReleaseRe
+bef23350b86138dd	var stackEscapedBreaks
+22927b021a6b5970	var stackIndents
+704a98aa602e3514	var stackLineBreaks
+c0c52276f3fde78f	var stackNotations
+dc1f643623587f2c	var stackWindowsPathRe

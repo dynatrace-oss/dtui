@@ -1,8 +1,11 @@
 package catalog
 
 import (
+	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/dynatrace-oss/dtui/internal/exckey"
 )
 
 // exceptionSpan mirrors the live shapes: a OneAgent/Java exception event with
@@ -185,5 +188,137 @@ func TestSpanPreviewHTTPStatusWithoutMethod(t *testing.T) {
 	})
 	if f := factByLabel(facts, "http"); f.Value != "503" || f.Class != "error" {
 		t.Errorf("http fact = %+v, want 503/error", f)
+	}
+}
+
+// The root flag is a boolean, or the word a string attribute spells it
+// with. Anything else is not the flag.
+func TestSpanExceptionRootFlag(t *testing.T) {
+	for _, tc := range []struct {
+		value any
+		want  bool
+	}{
+		{true, true}, {"true", true}, {false, false}, {"false", false}, {nil, false}, {"", false},
+		{[]any{true}, false}, {[]any{"true"}, false}, {map[string]any{"true": true}, false}, {1.0, false}, {"TRUE", false},
+	} {
+		excs := SpanExceptions(map[string]any{"span.events": []any{
+			map[string]any{"span_event.name": "exception", "exception.type": "A", "exception.is_caused_by_root": tc.value}}})
+		if len(excs) != 1 || excs[0].CauseRoot != tc.want {
+			t.Errorf("exception.is_caused_by_root = %#v: %+v, want root %v", tc.value, excs, tc.want)
+		}
+	}
+}
+
+func TestSpanExceptionCarriesTheRootFlag(t *testing.T) {
+	// What live spans carry: an id per event and the flag on the root.
+	live := SpanExceptions(map[string]any{"span.events": []any{
+		map[string]any{"span_event.name": "exception", "exception.type": "Wrapper", "exception.id": "00000000000000a7"},
+		map[string]any{"span_event.name": "exception", "exception.type": "Root",
+			"exception.id": "00000000000000b8", "exception.is_caused_by_root": true},
+		map[string]any{"span_event.name": "exception", "exception.type": "Outer", "exception.is_caused_by_root": false},
+	}})
+	want := []SpanException{{Type: "Wrapper"}, {Type: "Root", CauseRoot: true}, {Type: "Outer"}}
+	if !reflect.DeepEqual(live, want) {
+		t.Errorf("exceptions = %+v\nwant %+v", live, want)
+	}
+	if fp, _ := FingerprintExceptions(live); fp.Type != "Root" {
+		t.Errorf("fingerprinted %s, want the flagged root", fp.Type)
+	}
+	live[1].CauseRoot = false
+	if fp, _ := FingerprintExceptions(live); fp.Type != "Outer" {
+		t.Errorf("fingerprinted %s, want the last event where nothing marks a chain", fp.Type)
+	}
+}
+
+// The key is computed from the type, the message, the stack trace and the
+// root flag of the events; a location alone says nothing.
+func TestFingerprintExceptionsHandsTheEventsOn(t *testing.T) {
+	excs := SpanExceptions(exceptionSpan())
+	fp, ok := FingerprintExceptions(excs)
+	if !ok || !strings.HasPrefix(fp.Key, exckey.ExceptionKeyVersion+":") || fp.EventType != excs[len(excs)-1].Type {
+		t.Errorf("fingerprint %+v, %v", fp, ok)
+	}
+	if fp, ok := FingerprintExceptions([]SpanException{{Location: "Cart.java:42"}}); ok {
+		t.Errorf("a location alone got the key %s", fp.Key)
+	}
+	if _, ok := FingerprintExceptions(nil); ok {
+		t.Error("no events got a key")
+	}
+}
+
+// From a raw span record to the key: every field the key reads must reach
+// it, under either spelling of the stack trace, and the key is the one
+// exckey gives for the same fields.
+func TestFingerprintExceptionsFromARawRecord(t *testing.T) {
+	const (
+		java  = "java.lang.IllegalStateException: Cart 7 is locked\n\tat com.example.shop.Cart.add(Cart.java:42)\n\tat com.example.shop.Api.post(Api.java:12)\n"
+		other = "java.lang.IllegalStateException: Cart 7 is locked\n\tat com.example.shop.Stock.take(Stock.java:9)\n"
+	)
+	event := func(fields map[string]any) map[string]any {
+		fields["span_event.name"] = "exception"
+		return fields
+	}
+	record := func(events ...any) map[string]any { return map[string]any{"span.events": events} }
+	cartFrames := []exckey.StackFrame{
+		{Module: "com.example.shop.Cart", Function: "add", Syntax: exckey.StackJava},
+		{Module: "com.example.shop.Api", Function: "post", Syntax: exckey.StackJava},
+	}
+	stockFrames := []exckey.StackFrame{{Module: "com.example.shop.Stock", Function: "take", Syntax: exckey.StackJava}}
+	const typ = "java.lang.IllegalStateException"
+	for _, tc := range []struct {
+		name   string
+		rec    map[string]any
+		same   exckey.Event
+		rung   exckey.FingerprintRung
+		frames []exckey.StackFrame
+		msg    string
+	}{
+		{"the Grail spelling", record(event(map[string]any{"exception.type": typ, "exception.stack_trace": java})),
+			exckey.Event{Type: typ, StackTrace: java}, exckey.RungAppFrames, cartFrames, ""},
+		{"the OpenTelemetry spelling", record(event(map[string]any{"exception.type": typ, "exception.stacktrace": java})),
+			exckey.Event{Type: typ, StackTrace: java}, exckey.RungAppFrames, cartFrames, ""},
+		{"both spellings: Grail's", record(event(map[string]any{"exception.type": typ, "exception.stack_trace": java, "exception.stacktrace": other})),
+			exckey.Event{Type: typ, StackTrace: java}, exckey.RungAppFrames, cartFrames, ""},
+		{"both spellings, the other way round", record(event(map[string]any{"exception.type": typ, "exception.stack_trace": other, "exception.stacktrace": java})),
+			exckey.Event{Type: typ, StackTrace: other}, exckey.RungAppFrames, stockFrames, ""},
+		{"Grail's spelling of white space alone", record(event(map[string]any{"exception.type": typ, "exception.stack_trace": " \n\t", "exception.stacktrace": java})),
+			exckey.Event{Type: typ, StackTrace: java}, exckey.RungAppFrames, cartFrames, ""},
+		{"Grail's spelling empty", record(event(map[string]any{"exception.type": typ, "exception.stack_trace": "", "exception.stacktrace": java})),
+			exckey.Event{Type: typ, StackTrace: java}, exckey.RungAppFrames, cartFrames, ""},
+		{"a message alone", record(event(map[string]any{"exception.message": "Cart 7 is locked"})),
+			exckey.Event{Message: "Cart 7 is locked"}, exckey.RungMessage, nil, "Cart <n> is locked"},
+		{"a type and a message", record(event(map[string]any{"exception.type": typ, "exception.message": "Cart 7 is locked"})),
+			exckey.Event{Type: typ, Message: "Cart 7 is locked"}, exckey.RungMessage, nil, "Cart <n> is locked"},
+		{"a flagged chain", record(
+			event(map[string]any{"exception.type": "com.example.shop.CheckoutException", "exception.stack_trace": other}),
+			event(map[string]any{"exception.type": typ, "exception.stack_trace": java, "exception.is_caused_by_root": true}),
+			event(map[string]any{"exception.type": "java.lang.RuntimeException", "exception.message": "wrapped"})),
+			exckey.Event{Type: typ, StackTrace: java}, exckey.RungAppFrames, cartFrames, ""},
+	} {
+		got, ok := FingerprintExceptions(SpanExceptions(tc.rec))
+		want, wantOK := exckey.FingerprintExceptions([]exckey.Event{tc.same})
+		if !ok || !wantOK || got.Key != want.Key {
+			t.Errorf("%s: key %s %v, want %s", tc.name, got.Key, ok, want.Key)
+		}
+		if got.Rung != tc.rung || got.Type != tc.same.Type || !reflect.DeepEqual(got.Frames, tc.frames) || got.Message != tc.msg {
+			t.Errorf("%s: rung %v type %q message %q frames %+v", tc.name, got.Rung, got.Type, got.Message, got.Frames)
+		}
+	}
+	// Each field moves the key.
+	key := func(fields map[string]any) string {
+		fp, ok := FingerprintExceptions(SpanExceptions(record(event(fields))))
+		if !ok {
+			t.Fatalf("%v has no key", fields)
+		}
+		return fp.Key
+	}
+	if key(map[string]any{"exception.type": typ, "exception.message": "locked"}) == key(map[string]any{"exception.type": typ, "exception.message": "sold out"}) {
+		t.Error("the message does not reach the key")
+	}
+	if key(map[string]any{"exception.type": typ, "exception.stack_trace": java}) == key(map[string]any{"exception.type": typ, "exception.stack_trace": other}) {
+		t.Error("the stack trace does not reach the key")
+	}
+	if key(map[string]any{"exception.type": typ}) == key(map[string]any{"exception.type": "java.lang.Error"}) {
+		t.Error("the type does not reach the key")
 	}
 }

@@ -1,0 +1,17 @@
+goroutine 73 [running]:
+panic({0x6b2f40?, 0x7e6d30?})
+	/opt/go/src/runtime/panic.go:804 +0x168
+sync.(*WaitGroup).Add(0xc0001a2090, 0xffffffffffffffff)
+	/opt/go/src/sync/waitgroup.go:66 +0xa5
+sync.(*WaitGroup).Done(...)
+	/opt/go/src/sync/waitgroup.go:91
+net/http.(*Server).trackListener(0xc0001d6000, 0xc0001a6000, 0x0)
+	/opt/go/src/net/http/server.go:3521 +0x25
+net/http.(*onceCloseListener).close(0xc0001a6000)
+	/opt/go/src/net/http/server.go:3960 +0x1d
+sync.(*Once).doSlow(0xc0001a6010, 0xc00019fe90)
+	/opt/go/src/sync/once.go:78 +0xab
+net/http.(*Server).Close(0xc0001d6000)
+	/opt/go/src/net/http/server.go:3120 +0x9c
+created by os/signal.Notify.func1 in goroutine 1
+	/opt/go/src/os/signal/signal.go:150 +0x6a

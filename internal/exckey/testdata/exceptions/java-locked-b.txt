@@ -1,0 +1,10 @@
+java.lang.IllegalStateException: Cart 1190 is locked by order 0a1b2c3d-4e5f-4b7c-8e21-3f2b8c1e9d4a
+	at com.acme.shop.cart.CartService.addItem(CartService.java:57)
+	at com.acme.shop.cart.CartService$$FastClassBySpringCGLIB$$9f8e7d6c.invoke(<generated>)
+	at org.springframework.cglib.proxy.MethodProxy.invoke(MethodProxy.java:218)
+	at com.acme.shop.cart.CartService$$EnhancerBySpringCGLIB$$0c1d2e3f.addItem(<generated>)
+	at com.acme.shop.cart.CartController.post(CartController.java:23)
+	at sun.reflect.GeneratedMethodAccessor7.invoke(Unknown Source)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	at java.base/java.lang.Thread.run(Thread.java:840)

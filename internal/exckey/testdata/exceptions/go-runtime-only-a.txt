@@ -1,0 +1,19 @@
+goroutine 18 [running]:
+panic({0x6a1e20?, 0x7d5c10?})
+	/usr/local/go/src/runtime/panic.go:770 +0x132
+sync.(*WaitGroup).Add(0xc000014090, 0xffffffffffffffff)
+	/usr/local/go/src/sync/waitgroup.go:64 +0xa5
+sync.(*WaitGroup).Done(...)
+	/usr/local/go/src/sync/waitgroup.go:89
+net/http.(*Server).trackListener(0xc0000d4000, 0xc0000a4000, 0x0)
+	/usr/local/go/src/net/http/server.go:3404 +0x25
+net/http.(*onceCloseListener).close(0xc0000a4000)
+	/usr/local/go/src/net/http/server.go:3837 +0x1d
+sync.(*Once).doSlow(0xc0000a4010, 0xc00009fe90)
+	/usr/local/go/src/sync/once.go:74 +0xc2
+sync.(*Once).Do(...)
+	/usr/local/go/src/sync/once.go:65
+net/http.(*onceCloseListener).Close(0xc0000a4000)
+	/usr/local/go/src/net/http/server.go:3833 +0x4a
+created by net/http.(*Server).Serve in goroutine 1
+	/usr/local/go/src/net/http/server.go:3285 +0x4b4

@@ -1,0 +1,17 @@
+java.lang.RuntimeException: checkout failed
+	at shop.Checkout.checkout(Checkout.java:25)
+	at shop.Checkout.main(Checkout.java:31)
+Caused by: java.lang.IllegalStateException: no price for teapot
+	at shop.Checkout.price(Checkout.java:12)
+	at shop.Checkout.lambda$total$0(Checkout.java:18)
+	at java.base/java.util.stream.ReferencePipeline$4$1.accept(Unknown Source)
+	at java.base/java.util.AbstractList$RandomAccessSpliterator.forEachRemaining(Unknown Source)
+	at java.base/java.util.stream.AbstractPipeline.copyInto(Unknown Source)
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(Unknown Source)
+	at java.base/java.util.stream.ReduceOps$ReduceOp.evaluateSequential(Unknown Source)
+	at java.base/java.util.stream.AbstractPipeline.evaluate(Unknown Source)
+	at java.base/java.util.stream.IntPipeline.reduce(Unknown Source)
+	at java.base/java.util.stream.IntPipeline.sum(Unknown Source)
+	at shop.Checkout.total(Checkout.java:18)
+	at shop.Checkout.checkout(Checkout.java:23)
+	... 1 more

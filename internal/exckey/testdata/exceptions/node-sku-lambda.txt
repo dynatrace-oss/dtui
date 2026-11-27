@@ -1,0 +1,5 @@
+TypeError: Cannot read properties of undefined (reading 'sku')
+    at CartService.addItem (/var/task/src/cart/service.js:42:17)
+    at CartController.post (/var/task/src/cart/controller.js:17:5)
+    at Layer.handle (/var/task/node_modules/express/lib/router/layer.js:95:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)

@@ -79,7 +79,9 @@ Skip any that do not apply. Each finding must point at a line or file.
 - A bug fix with a test that fails without the fix?
 - New behaviour covered by model and catalog tests?
 - Golden files changed only where the layout change is intended, and only
-  for main screens? No HTTP, TTY or sleeps; synthetic identifiers only.
+  for main screens? Any other golden file is a versioned compatibility
+  fixture (CONTRIBUTING.md "Code conventions"), changed as the ADR that
+  versions it allows? No HTTP, TTY or sleeps; synthetic identifiers only.
 
 **Docs and memory drift**
 

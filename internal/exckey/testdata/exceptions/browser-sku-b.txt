@@ -1,0 +1,3 @@
+addItem@https://cdn.example.net/static/js/cart.9d4a0b7c.js:44:17
+post@https://cdn.example.net/static/js/cart.9d4a0b7c.js:19:5
+dispatch@https://cdn.example.net/static/js/vendor/node_modules/router/index.js:131:9

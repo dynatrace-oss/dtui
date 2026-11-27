@@ -1,0 +1,78 @@
+e1:6fb45e090150	dotnet: a namespace of its own
+e1:6fb45e090150	dotnet: as Mono prints it
+e1:f96217d03ad3	dotnet: baseline
+e1:6fb45e090150	dotnet: one event whose stack text holds the inner exception
+e1:f96217d03ad3	dotnet: other state machine numbers
+e1:b05c7e5859ce	dotnet: runtime frames only
+e1:b05c7e5859ce	dotnet: runtime frames only, with file lines and other callers
+e1:6ca545707e7b	go: a module path without a host, under a router from the module cache
+e1:3901a5fccfee	go: another goroutine, arguments and offsets
+e1:d988e60454e2	go: another panic under the same router
+e1:6ca545707e7b	go: another router version, goroutine and offsets
+e1:3901a5fccfee	go: baseline
+e1:5e57526e0788	go: standard library frames only
+e1:5e57526e0788	go: standard library frames only, another toolchain and caller
+e1:ed08ded4a0f5	java: a runtime throw site over six application frames
+e1:8e4df62fabb9	java: another fifth application frame
+e1:04de5c3787d9	java: baseline
+e1:04de5c3787d9	java: one event whose stack text holds the chain
+e1:04de5c3787d9	java: other ids, line numbers and proxy suffixes
+e1:04de5c3787d9	java: root cause flagged, wrapper last
+e1:0cfba379cafa	java: runtime frames only
+e1:0cfba379cafa	java: runtime frames only, another JDK build
+e1:199454ff35bd	java: same type, another top in-app frame
+e1:73e5515c7893	java: sendError from a controller, under the same filters
+e1:78e0e3dd0714	java: sendError from a resource handler, under the same filters
+e1:75f1eeb2f46b	java: sendError from the default servlet, under two filters
+e1:ed08ded4a0f5	java: the same reached from another caller, beyond the frames a key holds
+e1:75f1eeb2f46b	java: the same under another container build
+e1:f5d308694d23	java: the wrapper alone
+e1:bc61e8c9e87b	message: a URL
+e1:b0452eaaef81	message: a UUID
+e1:ef59d615e2b4	message: a bare IPv6 address
+e1:77947571ac88	message: a database error code
+e1:c7914e9a3300	message: a date and a time
+e1:cf4f39b89944	message: a file
+e1:cf4f39b89944	message: a file on another system
+e1:063232a3743f	message: a hex run
+e1:063232a3743f	message: a pointer
+e1:0004a7effa28	message: a prefixed id
+e1:ea60934d64e0	message: a route
+e1:768cc4e3cad2	message: a status code
+e1:c7914e9a3300	message: a timestamp
+e1:ef59d615e2b4	message: an IPv4 address and port
+e1:ef59d615e2b4	message: an IPv6 address and port
+e1:40b73c242ff8	message: an unknown stack notation
+e1:bc61e8c9e87b	message: another URL
+e1:b0452eaaef81	message: another UUID
+e1:887e1ee9271e	message: another database error code
+e1:622ae6add5f9	message: another kind of prefixed id
+e1:0004a7effa28	message: another prefixed id
+e1:bfeb2adf0ace	message: another route
+e1:e73ce2be5e38	message: another status code
+e1:71735d050961	message: another type, same message
+e1:cd32d629b404	message: baseline
+e1:606990f0a413	message: numbers with signs and units
+e1:cd32d629b404	message: other ids
+e1:606990f0a413	message: other numbers and units
+e1:b5ee2e23baba	message: quoted values
+e1:b5ee2e23baba	message: quoted values, other quotes
+e1:ea60934d64e0	message: the route with another id
+e1:cd4f749bb6e3	node: async frames
+e1:cd4f749bb6e3	node: baseline
+e1:cd4f749bb6e3	node: deployed under another root
+e1:ced612edba1a	node: in a browser
+e1:ced612edba1a	node: in a browser, another host and build
+e1:a2f949fa70aa	python: baseline
+e1:a2f949fa70aa	python: deployed into a release directory
+e1:a2f949fa70aa	python: other line numbers and interpreter
+e1:fc967edb343e	python: raised in a task group
+e1:3d80e3328fa5	python: same function name in another file
+e1:227a927b4fa6	python: standard library frames only
+e1:227a927b4fa6	python: standard library frames only, another interpreter and caller
+e1:6d1efa1dc7d0	real: CPython 3.14, a chained traceback through json
+e1:a7f88431a358	real: Go 1.26, a crash in a closure below sort.Slice, built with -trimpath
+e1:d1606be88ce0	real: Node 24, a callback of Array.map in an async function
+e1:bc92da90753b	real: OpenJDK 21, a cause below a stream
+e1:214bf26d118c	type: no message, no stack
+e1:214bf26d118c	type: without a chain the last event counts
