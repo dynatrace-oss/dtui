@@ -584,6 +584,19 @@ Validated live on both tenants (box 24h, demo 2h windows):
   suffix-matched (`call_stack`/`stack_trace`/`stacktrace`) and collapse
   behind their top frame — `vulnerability.stack` is a tech-stack enum and
   must not match.
+- **OneAgent exception events on one small tenant** (checked for the issue
+  key of [ADR-0022](../adr/0022-exception-issues-are-a-sampled-grouping.md);
+  facts about that tenant, not about every tenant kind). The events carried
+  `exception.type`, `exception.message`, `exception.stack_trace`,
+  `exception.id`, `exception.is_caused_by_root`, `exception.escaped`,
+  `exception.file.full` and `exception.line_number`.
+  `exception.caused_by_id` was on no event, so the key does not read it: the
+  root is the flagged event, else the last one. Java stacks came in the
+  notation `pkg.Class.method (File.java:123)`, with no `at ` prefix, which
+  the key's Java reader reads as well as the JVM's own. A projected span was
+  about 5 KB, most of it stack text, and the projection halved the result;
+  the tenant had very few exception spans, which says nothing about a busy
+  one.
 
 ### 1.11c Scan limit — a `filter` narrows the result, not the scan
 
