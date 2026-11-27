@@ -1,0 +1,21 @@
+goroutine 51 [running]:
+net/http.(*conn).serve.func1()
+	/usr/local/go/src/net/http/server.go:1898 +0xbe
+panic({0x9a3c80?, 0xe3b1d0?})
+	/usr/local/go/src/runtime/panic.go:770 +0x132
+shop/internal/cart.(*Service).AddItem(0xc000010000, {0x10b1c2d, 0x5})
+	/src/shop/internal/cart/service.go:42 +0x1d
+shop/internal/api.(*Handler).PostItem(0xc000020000, 0xc0001a2000)
+	/src/shop/internal/api/handler.go:17 +0x8c
+github.com/gin-gonic/gin.(*Context).Next(0xc0001a2000)
+	/go/pkg/mod/github.com/gin-gonic/gin@v1.9.1/context.go:174 +0x2b
+github.com/gin-gonic/gin.(*Engine).handleHTTPRequest(0xc000582000, 0xc0001a2000)
+	/go/pkg/mod/github.com/gin-gonic/gin@v1.9.1/gin.go:620 +0x66e
+github.com/gin-gonic/gin.(*Engine).ServeHTTP(0xc000582000, {0xa9a3e0, 0xc00019c000}, 0xc00018e000)
+	/go/pkg/mod/github.com/gin-gonic/gin@v1.9.1/gin.go:576 +0x1b2
+net/http.serverHandler.ServeHTTP({0xc000122000?}, {0xa9a3e0, 0xc00019c000}, 0xc00018e000)
+	/usr/local/go/src/net/http/server.go:3137 +0x8e
+net/http.(*conn).serve(0xc000166000, {0xa9b0b8, 0xc000094db0})
+	/usr/local/go/src/net/http/server.go:2039 +0x5e8
+created by net/http.(*Server).Serve in goroutine 1
+	/usr/local/go/src/net/http/server.go:3285 +0x4b4

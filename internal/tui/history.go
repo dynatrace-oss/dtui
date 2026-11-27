@@ -112,6 +112,10 @@ func (e historyEntry) signature() string {
 		if ref.Kind == "inspector" || ref.Kind == "problem" {
 			fmt.Fprintf(&b, "/%s/%s/%s", ref.Title, catalog.Str(ref.Rec, "timestamp"), catalog.Str(ref.Rec, "display_id"))
 		}
+		if ref.Kind == "inspector" {
+			// A span, and a row that stands for one, has neither of those.
+			fmt.Fprintf(&b, "/%s/%s", catalog.Str(ref.Rec, "trace.id"), catalog.Str(ref.Rec, "span.id"))
+		}
 		if ref.Kind == "vulnerability" {
 			fmt.Fprintf(&b, "/%s", catalog.Str(ref.Rec, "vulnerability.id"))
 		}

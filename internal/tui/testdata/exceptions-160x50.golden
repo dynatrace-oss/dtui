@@ -1,0 +1,50 @@
+ ▛▞▟ dtui  ·  context:test  ·  ● readonly                                                                                                               last 2h
+ exceptions ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 6 rows · 1s                                                                                                  │ java.lang.IllegalStateException
+ row limit: newest 1000 exception spans back to 11:48:19; any older ones are not counted · last 2h            │
+ COUNT  LAST          EXCEPTION               MESSAGE                                   SERVICE       BY      │  issue: e1:8d92c7fb9207
+▌  650  11:59:59      lang.IllegalStateExce…  cart <n> is locked                        +1 cart       app     │  in sample: 650 spans
+   100  11:59:56      sql.SQLException        connection to <ip> refused                orders        app     │  grouped by: app frames
+   100  11:59:53      TimeoutError            upstream timed out after <n>              payments      app     │  message
+    50  11:59:49      TypeError               Cannot read properties of undefined (re…  frontend      app     │   cart <n> is locked
+    50  11:59:47      HttpError               HTTP 503 from stock service               inventory     message │  thrown at
+    50  11:59:45      (no key)                                                          legacy-batch          │   com.example.shop.cart.CartService.addItem
+                                                                                                              │  then
+                                                                                                              │   com.example.shop.web.CartController.post
+                                                                                                              │  services: cart, checkout
+                                                                                                              │  last seen: 11:59:59
+                                                                                                              │  first seen: 11:48:21
+                                                                                                              │
+                                                                                                              │  trace: 00000000… (enter opens)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ enter waterfall  l trace-logs  / filter  f facets  J/K sort  : views  t timeframe  S segments  r refresh  ? help  q quit
+ ≡ dtctl query 'fetch spans, from:now() - 2h | filter iAny(span.events[][span_event.name] == "exception") | sort start_time desc | limit 1000 | fields start_ti…

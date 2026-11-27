@@ -1,0 +1,8 @@
+System.FormatException: The input string '12x' was not in a correct format.
+   at System.Number.ThrowFormatException(ReadOnlySpan`1 value)
+   at System.Int32.Parse(String s)
+   at System.Convert.ToInt32(String value)
+   at System.Threading.Tasks.Task.InnerInvoke()
+   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)
+   at System.Threading.ThreadPoolWorkQueue.Dispatch()

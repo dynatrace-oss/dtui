@@ -226,7 +226,7 @@ func (v *timelineView) visible() int {
 
 func (v *timelineView) View(width, height int) string {
 	v.width, v.height = width, height
-	return previewLayout(v.ds.previewOn(), width, height, v.renderBody, v.previewLines)
+	return previewLayout(v.ds.previewOn(), width, height, v.renderBody, v.previewLines, foldHintEnter)
 }
 
 func (v *timelineView) renderBody(width, height int) string {

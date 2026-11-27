@@ -529,6 +529,8 @@ const FacetTopValues = 250
 // bracket expression summarizes directly: fieldsSummary accepts it (validated
 // live — no temporary projection needed).
 func FieldsSummaryQuery(dql string, target Facet, searches []string, facets []Facet) string {
+	// By stage, like ComposeQuery: a one-liner has its tail on its only line.
+	dql = StageLines(dql)
 	var head string
 	if target.MapField != "" {
 		lines := strings.Split(dql, "\n")

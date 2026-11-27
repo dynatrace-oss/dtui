@@ -159,6 +159,7 @@ unbounded). Opened via drill-down they inherit the selection's scope.
 | Problems | `:problems`, `:pb` | `dt.davis.problems` | severity, status, title, root cause, impact, age; **the investigation entry point** |
 | Logs | `:logs` | `logs` | live-follow toggle, severity coloring, grouped-by-pattern mode, record inspector |
 | Traces | `:traces`, `:spans` | `spans` | span list with lenses (roots · errors · exceptions · server · client · db · rpc · messaging · genai · all, tab/[/] cycle — digits stay global at the top level); errors and exceptions deliberately coexist: errors = spans that *failed* (with an ERROR column carrying the minimal why — HTTP status, gRPC status, exception type), exceptions = spans that *threw* (~98% of which are not failed); trace-ID lookup (`:trace <id>`); waterfall view |
+| Exceptions | `:exceptions`, `:exc` | `spans` | exception issues: the newest exception-bearing spans in scope, at most 1000 and at most 8 MB of them, grouped in Go by an issue key (`internal/exckey`) into one row per issue with its count, last occurrence, type, message, services and what the key was built from; a line above the table says what the counts are counts of (what cut the sample: the row limit, the size limit, a scan limit, a timeout or a sampled read; how many spans arrived, how far back they reach, and the window); searches and facets narrow what is sampled; `/` also matches the issue key and the full type, and enter keeps that filter on the issues, since no span holds a key (`ctrl+s` sends the text as a further server search); enter → the newest span's trace waterfall; `y` copies the issue key; `c` echoes the query that fetched the sample and `o` opens it in a Notebook, not the grouping (no DQL computes the key); the status line of both says "the sampled exception spans, ungrouped" |
 | Metrics | `:metrics` | `timeseries` | metric browser for the scoped entity; braille/sparkline charts |
 | Events | `:events` | `events`, `dt.davis.events` | deployments, K8s events, Davis events; filterable by kind |
 | Security | `:security`, `:vulns` | `security.events` | vulnerabilities: DSS score + Davis badges (exposure/exploit/fix), open·muted·all lenses, entity pins; enter → tabbed page (overview · entities · attacks · entry points · timeline · details), markdown description via glamour |
@@ -283,7 +284,7 @@ pod → workload → namespace → the sibling workload that's actually broken.
 | `esc` | back (pop breadcrumb stack; view state and data preserved) |
 | `-` | toggle between the two most recent views (k9s-style) |
 | `H` | **history** — every breadcrumb trail visited, persisted per context across sessions (`~/.local/state/dtui/history.json`); enter restores the whole trail (data refetched, timeframe reapplied) |
-| `/` | incremental filter of the current table (client-side, per keystroke); **enter adds it as a server-side `\| search`** over every field of the unfetched dataset (terms stack as AND), **alt+enter replaces** the active terms; `esc` clears |
+| `/` | incremental filter of the current table (client-side, per keystroke); **enter adds it as a server-side `\| search`** over every field of the unfetched dataset (terms stack as AND), **alt+enter replaces** the active terms; `ctrl+s` adds a term like enter, and is the server search on a view whose enter keeps the filter local (`:exceptions`); `esc` clears |
 | `f` / `F` | **facet manager** — active filters listed first (enter edits in place, `ctrl+x` removes one, `W` saves a named preset to `~/.local/state/dtui/presets/<context>.yaml`), below them the attributes (quick-search over the fetched records' keys) to add a new facet: pick a value from the server's `fieldsSummary` top values, or type a `*` pattern (`payment*`, `*ayment*`); filters stack, render as pills, survive refresh/timeframe, and persist into history / `F` clears them all (esc-chain clears too). On bucket-backed views `dt.system.bucket` is pinned first (tagged `bucket`): buckets are Grail's physical data separation, so a bucket facet prunes reads at the source — its filter injects right after the fetch, and every record is projected with its bucket (`fieldsAdd dt.system.bucket`) so the inspector shows it |
 | `:preset` / `:preset <name>` | **preset list** — name, target view, **source** (`personal` vs `workspace`), and saved facets; enter opens the highlighted one (`1`–`9` open the numbered rows), `d` deletes a personal save (workspace `.dtui.yaml` presets are read-only here). `:preset <name>` skips the list. `dtui --preset` / `dtui save-preset` / `dtui delete-preset` are the CLI forms (`save-preset NAME VIEW` takes `--facet` and `--search` and saves through the same `SavePreset` as `W`); `W` on a faceted DQL table saves to `~/.local/state/dtui/presets/<context>.yaml`. Personal presets are per dtctl context (`:ctx` swaps the list; `list-presets`/`delete-preset` act on the active context); `.dtui.yaml` presets are shared |
 | `f` (inspector / details tab) | facet the **list beneath** by the selected field's value — scalars apply exactly, array elements as a contains pattern; refused with a message when the list's rows don't carry the field |
@@ -968,8 +969,14 @@ are dropped by `(owner, seq)` rather than by cancellation (see
 ### Refresh & data handling
 
 - Views own their data + `lastFetched`; auto-refresh is a per-view `tea.Tick`
-  honoring the global interval. The breadcrumb stack keeps popped views alive
-  for instant `esc`.
+  honoring the global interval. A tick that finds the view still waiting
+  refreshes nothing and arms the next one, so a query slower than the
+  interval paints its answer instead of being superseded on every tick. A
+  query that hangs therefore holds auto-refresh back until the client gives
+  up on it, which can take about seven minutes (two for the execute, five
+  for the poll; the 60 s fetch timeout is the server's); `r` refreshes at
+  once in the meantime. The breadcrumb stack keeps popped views alive for
+  instant `esc`.
 - `/` filtering and sorting are client-side over the fetched page; entity
   lists are paged (DQL limit + "load more" on scroll-past-end). Server-side
   narrowing is what scope pinning is for — consistent with the "no custom
@@ -1016,6 +1023,12 @@ implementation landed on cheaper, less brittle seams.)
   state). The point is guarding core functionality against visual breakage —
   not pinning every pixel, which is the churn the original design rejected
   goldens for.
+- **Compatibility fixtures**: the one other kind of golden file. It pins an
+  identifier that people or tools keep outside dtui, and the declarations
+  that version of the identifier is computed from, so a change to either is a
+  conscious step. It is not a snapshot of a screen and lives with the package
+  that computes the identifier, not in `internal/tui`
+  ([ADR-0022](../adr/0022-exception-issues-are-a-sampled-grouping.md)).
 - **Datasource tests**: no HTTP anywhere — the `dataSource.runFn` func seam
   replaces the executor, and API-backed views stub the injected `Source`
   closures. Canned rows are injected via `seedRows`.

@@ -1,0 +1,14 @@
+  + Exception Group Traceback (most recent call last):
+  |   File "/app/shop/tasks.py", line 12, in run_all
+  |     async with asyncio.TaskGroup() as group:
+  |   File "/usr/lib/python3.12/asyncio/taskgroups.py", line 145, in __aexit__
+  |     raise me from None
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/app/shop/views.py", line 17, in post
+    |     cart.add_item(sku)
+    |   File "/app/shop/cart.py", line 42, in add_item
+    |     raise ValueError("cart 7 is locked")
+    | ValueError: cart 7 is locked
+    +------------------------------------

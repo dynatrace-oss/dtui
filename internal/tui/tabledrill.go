@@ -4,6 +4,7 @@ package tui
 
 import (
 	"fmt"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -70,6 +71,10 @@ func (v *tableView) inspect(rec map[string]any) tea.Cmd {
 	title := v.spec.Name
 	if e := v.entityOf(rec); e != nil && e.Name != "" {
 		title = e.Name
+	} else if _, isIssue := catalog.IssueOf(rec); isIssue {
+		// An issue row has none of the fields below; it is called what its
+		// preview pane calls it.
+		title = catalog.PreviewTitle(rec)
 	} else {
 		for _, key := range []string{"title", "name", "display_id"} {
 			if t := catalog.Str(rec, key); t != "" {
@@ -78,7 +83,24 @@ func (v *tableView) inspect(rec map[string]any) tea.Cmd {
 			}
 		}
 	}
+	if v.spec.Sample != nil {
+		rec = fetchedFields(rec)
+	}
 	return func() tea.Msg { return inspectMsg{title: title, rec: rec} }
+}
+
+// fetchedFields copies a sampled view's row without what its Group computed
+// (the "__" keys, ADR-0016). The inspector shows fetched fields only, and its
+// page is written to the history file as it stands: what dtui computed from a
+// sample is not a record, and is not kept (ADR-0022).
+func fetchedFields(row map[string]any) map[string]any {
+	out := make(map[string]any, len(row))
+	for k, v := range row {
+		if !strings.HasPrefix(k, "__") {
+			out[k] = v
+		}
+	}
+	return out
 }
 
 // drill opens the target view scoped to the selected row's entity. The

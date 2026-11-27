@@ -47,7 +47,10 @@ func (v *tableView) previewBottom() bool {
 // previewLayout composes a view body with the selected row's preview pane: a
 // side pane on wide screens, a bottom panel on narrow-but-tall ones, the body
 // alone otherwise (cramped screens, or preview toggled off with P).
-func previewLayout(on bool, width, height int, body func(w, h int) string, preview func(w int) []string) string {
+//
+// foldHint is shown where the bottom panel folds a preview too long for it:
+// the key that shows the rest.
+func previewLayout(on bool, width, height int, body func(w, h int) string, preview func(w int) []string, foldHint string) string {
 	switch {
 	case previewSideOn(on, width):
 		paneW := width * 2 / 5
@@ -88,7 +91,7 @@ func previewLayout(on bool, width, height int, body func(w, h int) string, previ
 		}
 		lines := preview(width - 2)
 		if len(lines) > previewBottomH {
-			lines = append(lines[:previewBottomH-1], theme.Dim.Render("… (enter opens the full record)"))
+			lines = append(lines[:previewBottomH-1], theme.Dim.Render("… ("+foldHint+")"))
 		}
 		out += "\n" + theme.Rule.Render(strings.Repeat("─", max(width, 0)))
 		for _, l := range lines {
@@ -368,3 +371,19 @@ func (v *tableView) tagPreviewLines(rec map[string]any, w int) []string {
 	}
 	return lines
 }
+
+// foldHint says, where the bottom panel folds a preview too long for it,
+// which key shows the rest: enter, unless enter leaves for another view (a
+// trace, a view of children). There d does, and opens the entity's detail
+// page where the view has one, as in Update.
+func (v *tableView) foldHint() string {
+	switch {
+	case v.spec.EnterTarget == "" || v.spec.EnterTarget == "inspect":
+		return foldHintEnter
+	case v.spec.EnterArg == nil && v.spec.Kind == catalog.KindEntity:
+		return "d opens the details"
+	}
+	return "d opens the full record"
+}
+
+const foldHintEnter = "enter opens the full record"

@@ -1,0 +1,3 @@
+   at Example.Shop.Cart.CartService.AddItem(String sku, Int32 quantity) in /src/Shop/Cart/CartService.cs:line 44
+   at Example.Shop.Cart.CartController.Post(AddItemRequest request) in /src/Shop/Cart/CartController.cs:line 19
+   at Microsoft.AspNetCore.Routing.EndpointMiddleware.Invoke(HttpContext httpContext)

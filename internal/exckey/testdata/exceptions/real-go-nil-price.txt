@@ -1,0 +1,16 @@
+panic: runtime error: invalid memory address or nil pointer dereference
+[signal SIGSEGV: segmentation violation code=0x2 addr=0x0 pc=0x105015618]
+
+goroutine 1 [running]:
+shop.example.invalid/shop/cart.(*Cart).Total.func1(0x105121a40?, 0x12be7d4a8?)
+	shop.example.invalid/shop/cart/cart.go:16 +0x68
+sort.insertionSort_func({0x7b675c89ada8?, 0x7b675c8ae060?}, 0x0, 0x3)
+	sort/zsortfunc.go:12 +0xac
+sort.pdqsort_func({0x7b675c89ada8?, 0x7b675c8ae060?}, 0x18?, 0x1050d0200?, 0x3?)
+	sort/zsortfunc.go:73 +0x258
+sort.Slice({0x1050ce040?, 0x7b675c8b8000?}, 0x7b675c89ada8)
+	sort/slice.go:29 +0xc4
+shop.example.invalid/shop/cart.(*Cart).Total(0x7b675c89ae28, {0x7b675c8a20f0, 0x3, 0x3})
+	shop.example.invalid/shop/cart/cart.go:15 +0x70
+main.main()
+	shop.example.invalid/shop/main.go:11 +0x178

@@ -95,6 +95,40 @@ func TestInjectStagesNoTailAppends(t *testing.T) {
 	}
 }
 
+// A projection is never part of the tail, also behind a sort and a limit: a
+// stage placed in front of it could name a field the projection creates. A
+// view that projects the records it kept says so in SampleSpec.Fields.
+func TestTailStartStopsAtAProjection(t *testing.T) {
+	for dql, want := range map[string]int{
+		"fetch logs\n| fields a, b":                          2,
+		"fetch logs\n| limit 5\n| fields a\n| fields b":      4,
+		"fetch logs\n| fields a\n| sort a\n| limit 5":        2,
+		"fetch logs\n| sort a\n| limit 5\n| fields b = a":    4,
+		"fetch logs\n| sort a\n| limit 5\n| fieldsAdd b = 1": 4,
+		"| sort a\n| limit 5":                                0,
+	} {
+		lines := strings.Split(dql, "\n")
+		if got := tailStart(lines); got != want {
+			t.Errorf("tailStart(%q) = %d, want %d", dql, got, want)
+		}
+	}
+}
+
+// A query typed on one line and the same query on four give the same value
+// picker query, as they give the same composed query: both read the stages,
+// not the line breaks.
+func TestFieldsSummaryQueryReadsAOneLineQueryByItsStages(t *testing.T) {
+	lines := "fetch logs\n| filter a == 1\n| sort timestamp desc\n| limit 10"
+	oneLine := "fetch logs | filter a == 1 | sort timestamp desc | limit 10"
+	target, facets := Facet{Field: "loglevel"}, []Facet{{Field: "host", Value: "h"}}
+	want := "fetch logs\n| search \"*x*\"\n| filter a == 1\n| filter host == \"h\"\n| fieldsSummary loglevel, topValues: 250"
+	for name, dql := range map[string]string{"four lines": lines, "one line": oneLine} {
+		if got := FieldsSummaryQuery(dql, target, []string{"x"}, facets); got != want {
+			t.Errorf("%s: summary query =\n%s\nwant\n%s", name, got, want)
+		}
+	}
+}
+
 // Search stages must land directly after the source command — DQL rejects
 // them after transforming commands like parse/expand/summarize (validated
 // live: SEARCH_COMMAND_NOT_ALLOWED_AFTER on the pods pipeline). Multiple

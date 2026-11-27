@@ -48,6 +48,9 @@ func PreviewTitle(rec map[string]any) string {
 }
 
 func previewTitle(rec map[string]any) string {
+	if issue, ok := IssueOf(rec); ok {
+		return issue.name()
+	}
 	switch {
 	case Str(rec, "event.kind") == "DAVIS_PROBLEM":
 		return joinNonEmpty(" ", Str(rec, "display_id"), Str(rec, "event.name"))
@@ -95,6 +98,9 @@ func PreviewFacts(rec map[string]any) []PreviewFact {
 }
 
 func previewFacts(rec map[string]any) []PreviewFact {
+	if issue, ok := IssueOf(rec); ok {
+		return issuePreview(issue)
+	}
 	switch {
 	case Str(rec, "event.kind") == "DAVIS_PROBLEM":
 		return problemPreview(rec)

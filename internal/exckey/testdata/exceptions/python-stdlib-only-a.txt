@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/usr/lib/python3.11/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/usr/lib/python3.11/json/tool.py", line 85, in <module>
+    main()
+  File "/usr/lib/python3.11/json/tool.py", line 61, in main
+    objs = (json.load(infile),)
+  File "/usr/lib/python3.11/json/__init__.py", line 293, in load
+    return loads(fp.read(),
+  File "/usr/lib/python3.11/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+  File "/usr/lib/python3.11/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+  File "/usr/lib/python3.11/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)

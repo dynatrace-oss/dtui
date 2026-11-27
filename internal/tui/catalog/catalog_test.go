@@ -301,6 +301,7 @@ func TestLookupResolvesShortAliases(t *testing.T) {
 		"tbl": "tables",
 		"bkt": "buckets", "lookups": "files", "syn": "synthetic",
 		"slo": "slos", "ad": "detectors", "pat": "patterns", "runs": "executions",
+		"exc": "exceptions", "exception": "exceptions",
 	}
 	for input, want := range cases {
 		spec := Lookup(input)

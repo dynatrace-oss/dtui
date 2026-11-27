@@ -35,6 +35,6 @@
   code: com.example.shop.web.OrderController
   service: OrderController
   kind: server
- … (enter opens the full record)
+ … (d opens the full record)
  tab lens  enter waterfall  l trace-logs  / filter  f facets  J/K sort  : views  t timeframe  S seg…
  ≡ dtctl query 'fetch spans, from:now() - 2h | fieldsAdd dt.system.bucket | filter isNull(span.pare…

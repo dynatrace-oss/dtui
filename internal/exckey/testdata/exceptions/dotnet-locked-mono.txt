@@ -1,0 +1,3 @@
+  at Example.Shop.Cart.CartService.AddItem (System.String sku, System.Int32 quantity) [0x0002a] in <4f1c2d3e5a6b7c8d9e0f1a2b3c4d5e6f>:0
+  at Example.Shop.Cart.CartController.Post (Example.Shop.Cart.AddItemRequest request) [0x00011] in <4f1c2d3e5a6b7c8d9e0f1a2b3c4d5e6f>:0
+  at System.Threading.Tasks.Task.Execute () [0x00000] in <a1b2c3d4e5f60718293a4b5c6d7e8f90>:0

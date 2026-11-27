@@ -35,6 +35,6 @@
   kind: deployment
   namespace: checkout
   created: Apr 30 16:06
- … (enter opens the full record)
+ … (d opens the details)
  enter pods  d details  l logs  s traces  m metrics  p problems  v events  / filter  f facets  J/K …
  ≡ dtctl query 'smartscapeNodes "K8S_DEPLOYMENT", "K8S_STATEFULSET", "K8S_DAEMONSET" | parse k8s.ob…

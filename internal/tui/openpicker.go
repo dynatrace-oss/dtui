@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
+
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/dynatrace-oss/dtui/internal/tui/theme"
@@ -30,6 +32,13 @@ func (a *app) openSelection() tea.Cmd {
 		dql = p.DQL()
 	}
 	opts := linkOptionsFor(a.opts.Environment, rec, entity, traceID, dql)
+	if note := exitNote(a.top()); note != "" {
+		for i := range opts {
+			if opts[i].URL == queryLink(a.opts.Environment, dql) {
+				opts[i].Label += " " + note
+			}
+		}
+	}
 	if len(opts) == 0 {
 		return statusErr("nothing to open here")
 	}
@@ -89,15 +98,26 @@ func (p *openPicker) HandleKey(msg tea.KeyMsg) tea.Cmd {
 	return nil
 }
 
+// overlayChrome is what theme.OverlayBox adds around its content: a border
+// and two cells of padding on each side.
+const overlayChrome = 6
+
 func (p *openPicker) View(width, height int) string {
 	var b strings.Builder
 	b.WriteString(theme.OverlayTitle.Render("open with") + "\n\n")
+	// As wide as the longest entry, so none is cut on a screen that has
+	// the room: an entry's last words can be the ones that matter.
+	rowW := 44
+	for i, o := range p.list {
+		rowW = max(rowW, lipgloss.Width(fmt.Sprintf(" %d · %s", i+1, o.Label)))
+	}
+	rowW = max(min(rowW, width-overlayChrome), 1)
 	for i, o := range p.list {
 		label := fmt.Sprintf("%d · %s", i+1, o.Label)
 		if i == p.sel {
-			b.WriteString(theme.Selected.Render(pad(" "+label, 44)))
+			b.WriteString(theme.Selected.Render(pad(" "+label, rowW)))
 		} else {
-			b.WriteString(" " + theme.HeaderVal.Render(pad(label, 43)))
+			b.WriteString(" " + theme.HeaderVal.Render(pad(label, rowW-1)))
 		}
 		b.WriteString("\n")
 	}

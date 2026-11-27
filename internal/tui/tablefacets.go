@@ -161,6 +161,11 @@ func (v *tableView) addFacet(f catalog.Facet) tea.Cmd {
 // hasField reports whether any fetched record carries the key — the guard
 // that keeps a cross-view facet from silently emptying the list.
 func (v *tableView) hasField(field string) bool {
+	if v.sample != nil {
+		// The rows of a sampled view are computed; the fields are those of
+		// the records they were computed from.
+		return v.sample.keys[field]
+	}
 	for _, rec := range v.all {
 		if _, ok := rec[field]; ok {
 			return true
@@ -185,12 +190,21 @@ func (v *tableView) facetCandidates() []string {
 		}
 		return dims
 	}
+	if v.sample != nil {
+		return v.orderCandidates(v.sample.fields, v.tagCandidates())
+	}
+	return v.orderCandidates(scalarFacetFields(v.all), v.tagCandidates())
+}
+
+// scalarFacetFields lists the scalar attribute keys of fetched records,
+// sorted: the fields a facet can filter on.
+func scalarFacetFields(records []map[string]any) []string {
 	seen := map[string]bool{}
 	// primaryTagNonNull tracks primary_tags.* keys that have at least one
 	// non-null value in the fetched sample — used to suppress null-only keys.
 	primaryTagNonNull := map[string]bool{}
 	var fields []string
-	for _, rec := range v.all {
+	for _, rec := range records {
 		for k, val := range rec {
 			// Skip synthetic keys (enrichment series, resolved display values):
 			// the "__" convention marks fields the app stamped on the record, not
@@ -232,7 +246,7 @@ func (v *tableView) facetCandidates() []string {
 	}
 	fields = filtered
 	sort.Strings(fields)
-	return v.orderCandidates(fields, v.tagCandidates())
+	return fields
 }
 
 // tagCandidates builds the grouped smartscape-tag facet candidates from the
@@ -283,7 +297,8 @@ func (v *tableView) orderCandidates(scalars, tagKeys []string) []string {
 	// Discovered tag keys always trail — one identity per context+key, already
 	// grouped by tagContextOrder.
 	out = append(out, tagKeys...)
-	if catalog.BucketEligible(v.spec.Query(v.scope)) {
+	// A sampled view's records do not carry the bucket (composeDQL).
+	if v.spec.Sample == nil && catalog.BucketEligible(v.spec.Query(v.scope)) {
 		out = append([]string{catalog.BucketField}, out...)
 	}
 	return out

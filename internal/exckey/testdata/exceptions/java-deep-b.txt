@@ -1,0 +1,10 @@
+java.lang.IndexOutOfBoundsException: Index 12 out of bounds for length 4
+	at java.base/java.util.Objects.checkIndex(Objects.java:372)
+	at com.example.shop.cart.Quantity.of(Quantity.java:23)
+	at com.example.shop.cart.CartLine.withQuantity(CartLine.java:51)
+	at com.example.shop.cart.Cart.update(Cart.java:80)
+	at com.example.shop.cart.CartService.updateLine(CartService.java:110)
+	at com.example.shop.cart.CartController.put(CartController.java:39)
+	at com.example.shop.web.XmlEndpoint.handle(XmlEndpoint.java:27)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:897)
+	at java.base/java.lang.Thread.run(Thread.java:1583)

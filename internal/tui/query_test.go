@@ -159,3 +159,25 @@ func TestDeriveColumnsRanksCapsAndFlexes(t *testing.T) {
 		t.Fatalf("widths = %v: a 24+ char key flexes, shorter keys get len+2", widths)
 	}
 }
+
+// A user's own query may end sort, limit, fields. A facet on a field the
+// projection creates must filter after it, and the value picker must
+// summarise the projected records: the field does not exist before.
+func TestQueryViewFacetsFollowTheUsersProjection(t *testing.T) {
+	const dql = "fetch logs\n| sort timestamp desc\n| limit 10\n| fields label = content"
+	qv := newQueryView(&dataSource{}, "", catalog.DefaultTimeframe, nil)
+	qv.submitted(dql)
+	tv := qv.results
+	tv.facets = []catalog.Facet{{Field: "label", Value: "x"}}
+
+	if got, want := tv.composeDQL(), dql+"\n| filter label == \"x\""; got != want {
+		t.Errorf("composed query =\n%s\nwant\n%s", got, want)
+	}
+	var summary string
+	tv.ds.runFn = func(q string) ([]map[string]any, error) { summary = q; return nil, nil }
+	tv.facets = nil
+	tv.openFacetValues("label")()
+	if want := dql + "\n| fieldsSummary label, topValues: 250"; summary != want {
+		t.Errorf("value picker query =\n%s\nwant\n%s", summary, want)
+	}
+}

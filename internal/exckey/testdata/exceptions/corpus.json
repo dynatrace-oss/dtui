@@ -1,0 +1,913 @@
+[
+  {
+    "name": "java: baseline",
+    "group": "java-cart-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "java.lang.IllegalStateException",
+        "message": "Cart 7 is locked by order 3f2b8c1e-9d4a-4b7c-8e21-0a1b2c3d4e5f",
+        "stack": "java-locked-a.txt"
+      }
+    ]
+  },
+  {
+    "name": "java: other ids, line numbers and proxy suffixes",
+    "group": "java-cart-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "java.lang.IllegalStateException",
+        "message": "Cart 1190 is locked by order 0a1b2c3d-4e5f-4b7c-8e21-3f2b8c1e9d4a",
+        "stack": "java-locked-b.txt"
+      }
+    ]
+  },
+  {
+    "name": "java: root cause flagged, wrapper last",
+    "group": "java-cart-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "java.lang.IllegalStateException",
+        "message": "Cart 7 is locked",
+        "stack": "java-locked-a.txt",
+        "root": true
+      },
+      {
+        "type": "com.acme.shop.checkout.CheckoutException",
+        "message": "checkout failed",
+        "stack": "java-locked-wrapper.txt"
+      }
+    ]
+  },
+  {
+    "name": "java: same type, another top in-app frame",
+    "group": "java-cart-remove",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "java.lang.IllegalStateException",
+        "message": "Cart 7 is locked by order 3f2b8c1e-9d4a-4b7c-8e21-0a1b2c3d4e5f",
+        "stack": "java-locked-remove.txt"
+      }
+    ]
+  },
+  {
+    "name": "java: the wrapper alone",
+    "group": "java-checkout",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "com.acme.shop.checkout.CheckoutException",
+        "message": "checkout failed",
+        "stack": "java-locked-wrapper.txt"
+      }
+    ]
+  },
+  {
+    "name": "java: runtime frames only",
+    "group": "java-comodification",
+    "rung": "frames",
+    "events": [
+      {
+        "type": "java.util.ConcurrentModificationException",
+        "stack": "java-runtime-only-a.txt"
+      }
+    ]
+  },
+  {
+    "name": "java: runtime frames only, another JDK build",
+    "group": "java-comodification",
+    "rung": "frames",
+    "events": [
+      {
+        "type": "java.util.ConcurrentModificationException",
+        "stack": "java-runtime-only-b.txt"
+      }
+    ]
+  },
+  {
+    "name": "java: one event whose stack text holds the chain",
+    "group": "java-cart-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "com.acme.shop.checkout.CheckoutException",
+        "message": "checkout failed",
+        "stack": "java-locked-chain.txt"
+      }
+    ]
+  },
+  {
+    "name": "java: sendError from the default servlet, under two filters",
+    "group": "java-filters-static",
+    "rung": "frames",
+    "events": [
+      {
+        "type": "javax.servlet.http.HttpServletResponse.sendError",
+        "message": "HTTP 404 sendError called",
+        "stack": "java-filters-static-a.txt"
+      }
+    ]
+  },
+  {
+    "name": "java: the same under another container build",
+    "group": "java-filters-static",
+    "rung": "frames",
+    "events": [
+      {
+        "type": "javax.servlet.http.HttpServletResponse.sendError",
+        "message": "HTTP 404 sendError called",
+        "stack": "java-filters-static-b.txt"
+      }
+    ]
+  },
+  {
+    "name": "java: sendError from a resource handler, under the same filters",
+    "group": "java-filters-resource",
+    "rung": "frames",
+    "events": [
+      {
+        "type": "javax.servlet.http.HttpServletResponse.sendError",
+        "message": "HTTP 404 sendError called",
+        "stack": "java-filters-resource.txt"
+      }
+    ]
+  },
+  {
+    "name": "java: sendError from a controller, under the same filters",
+    "group": "java-filters-controller",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "javax.servlet.http.HttpServletResponse.sendError",
+        "message": "HTTP 404 sendError called",
+        "stack": "java-filters-controller.txt"
+      }
+    ]
+  },
+  {
+    "name": "go: baseline",
+    "group": "go-cart-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "runtime.Error",
+        "message": "invalid memory address or nil pointer dereference",
+        "stack": "go-nil-a.txt"
+      }
+    ]
+  },
+  {
+    "name": "go: another goroutine, arguments and offsets",
+    "group": "go-cart-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "runtime.Error",
+        "message": "invalid memory address or nil pointer dereference",
+        "stack": "go-nil-b.txt"
+      }
+    ]
+  },
+  {
+    "name": "go: a module path without a host, under a router from the module cache",
+    "group": "go-handler-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "runtime.Error",
+        "message": "invalid memory address or nil pointer dereference",
+        "stack": "go-handler-add.txt"
+      }
+    ]
+  },
+  {
+    "name": "go: another router version, goroutine and offsets",
+    "group": "go-handler-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "runtime.Error",
+        "message": "invalid memory address or nil pointer dereference",
+        "stack": "go-handler-add-b.txt"
+      }
+    ]
+  },
+  {
+    "name": "go: another panic under the same router",
+    "group": "go-handler-remove",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "runtime.Error",
+        "message": "invalid memory address or nil pointer dereference",
+        "stack": "go-handler-remove.txt"
+      }
+    ]
+  },
+  {
+    "name": "node: baseline",
+    "group": "node-cart-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "TypeError",
+        "message": "Cannot read properties of undefined (reading 'sku')",
+        "stack": "node-sku-a.txt"
+      }
+    ]
+  },
+  {
+    "name": "node: async frames",
+    "group": "node-cart-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "TypeError",
+        "message": "Cannot read properties of undefined (reading 'sku')",
+        "stack": "node-sku-b.txt"
+      }
+    ]
+  },
+  {
+    "name": "node: deployed under another root",
+    "group": "node-cart-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "TypeError",
+        "message": "Cannot read properties of undefined (reading 'sku')",
+        "stack": "node-sku-lambda.txt"
+      }
+    ]
+  },
+  {
+    "name": "node: in a browser",
+    "group": "browser-cart-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "TypeError",
+        "message": "undefined is not an object (evaluating 'item.sku')",
+        "stack": "browser-sku-a.txt"
+      }
+    ]
+  },
+  {
+    "name": "node: in a browser, another host and build",
+    "group": "browser-cart-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "TypeError",
+        "message": "undefined is not an object (evaluating 'item.sku')",
+        "stack": "browser-sku-b.txt"
+      }
+    ]
+  },
+  {
+    "name": "dotnet: baseline",
+    "group": "dotnet-cart-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "System.InvalidOperationException",
+        "message": "Cart 7 is locked",
+        "stack": "dotnet-locked-a.txt"
+      }
+    ]
+  },
+  {
+    "name": "dotnet: other state machine numbers",
+    "group": "dotnet-cart-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "System.InvalidOperationException",
+        "message": "Cart 1190 is locked",
+        "stack": "dotnet-locked-b.txt"
+      }
+    ]
+  },
+  {
+    "name": "dotnet: a namespace of its own",
+    "group": "dotnet-example-cart-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "System.InvalidOperationException",
+        "message": "Cart 7 is locked",
+        "stack": "dotnet-locked-plain.txt"
+      }
+    ]
+  },
+  {
+    "name": "dotnet: one event whose stack text holds the inner exception",
+    "group": "dotnet-example-cart-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "Example.Shop.Checkout.CheckoutException",
+        "message": "checkout failed",
+        "stack": "dotnet-locked-inner.txt"
+      }
+    ]
+  },
+  {
+    "name": "dotnet: as Mono prints it",
+    "group": "dotnet-example-cart-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "System.InvalidOperationException",
+        "message": "Cart 1190 is locked",
+        "stack": "dotnet-locked-mono.txt"
+      }
+    ]
+  },
+  {
+    "name": "python: baseline",
+    "group": "python-cart-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "ValueError",
+        "message": "cart 7 is locked",
+        "stack": "python-locked-a.txt"
+      }
+    ]
+  },
+  {
+    "name": "python: other line numbers and interpreter",
+    "group": "python-cart-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "ValueError",
+        "message": "cart 1190 is locked",
+        "stack": "python-locked-b.txt"
+      }
+    ]
+  },
+  {
+    "name": "python: deployed into a release directory",
+    "group": "python-cart-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "ValueError",
+        "message": "cart 7 is locked",
+        "stack": "python-locked-release.txt"
+      }
+    ]
+  },
+  {
+    "name": "python: same function name in another file",
+    "group": "python-checkout-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "ValueError",
+        "message": "cart 7 is locked",
+        "stack": "python-locked-checkout.txt"
+      }
+    ]
+  },
+  {
+    "name": "python: raised in a task group",
+    "group": "python-views-add",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "ExceptionGroup",
+        "message": "unhandled errors in a TaskGroup (1 sub-exception)",
+        "stack": "python-locked-group.txt"
+      }
+    ]
+  },
+  {
+    "name": "java: a runtime throw site over six application frames",
+    "group": "java-cart-update",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "java.lang.IndexOutOfBoundsException",
+        "message": "Index 7 out of bounds for length 3",
+        "stack": "java-deep-a.txt"
+      }
+    ]
+  },
+  {
+    "name": "java: the same reached from another caller, beyond the frames a key holds",
+    "group": "java-cart-update",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "java.lang.IndexOutOfBoundsException",
+        "message": "Index 12 out of bounds for length 4",
+        "stack": "java-deep-b.txt"
+      }
+    ]
+  },
+  {
+    "name": "java: another fifth application frame",
+    "group": "java-cart-patch",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "java.lang.IndexOutOfBoundsException",
+        "message": "Index 7 out of bounds for length 3",
+        "stack": "java-deep-patch.txt"
+      }
+    ]
+  },
+  {
+    "name": "dotnet: runtime frames only",
+    "group": "dotnet-format",
+    "rung": "frames",
+    "events": [
+      {
+        "type": "System.FormatException",
+        "message": "The input string '12x' was not in a correct format.",
+        "stack": "dotnet-runtime-only-a.txt"
+      }
+    ]
+  },
+  {
+    "name": "dotnet: runtime frames only, with file lines and other callers",
+    "group": "dotnet-format",
+    "rung": "frames",
+    "events": [
+      {
+        "type": "System.FormatException",
+        "message": "The input string '7,5' was not in a correct format.",
+        "stack": "dotnet-runtime-only-b.txt"
+      }
+    ]
+  },
+  {
+    "name": "python: standard library frames only",
+    "group": "python-json-decode",
+    "rung": "frames",
+    "events": [
+      {
+        "type": "json.decoder.JSONDecodeError",
+        "message": "Expecting value: line 1 column 1 (char 0)",
+        "stack": "python-stdlib-only-a.txt"
+      }
+    ]
+  },
+  {
+    "name": "python: standard library frames only, another interpreter and caller",
+    "group": "python-json-decode",
+    "rung": "frames",
+    "events": [
+      {
+        "type": "json.decoder.JSONDecodeError",
+        "message": "Expecting value: line 3 column 9 (char 41)",
+        "stack": "python-stdlib-only-b.txt"
+      }
+    ]
+  },
+  {
+    "name": "go: standard library frames only",
+    "group": "go-waitgroup",
+    "rung": "frames",
+    "events": [
+      {
+        "type": "runtime.Error",
+        "message": "sync: negative WaitGroup counter",
+        "stack": "go-runtime-only-a.txt"
+      }
+    ]
+  },
+  {
+    "name": "go: standard library frames only, another toolchain and caller",
+    "group": "go-waitgroup",
+    "rung": "frames",
+    "events": [
+      {
+        "type": "runtime.Error",
+        "message": "sync: negative WaitGroup counter",
+        "stack": "go-runtime-only-b.txt"
+      }
+    ]
+  },
+  {
+    "name": "message: baseline",
+    "group": "message-timeout",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.acme.shop.TimeoutException",
+        "message": "timeout after 250ms calling 10.0.0.7:8080 for order 17"
+      }
+    ]
+  },
+  {
+    "name": "message: other ids",
+    "group": "message-timeout",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.acme.shop.TimeoutException",
+        "message": "timeout after 3s calling 10.0.0.19:9090 for order 2301"
+      }
+    ]
+  },
+  {
+    "name": "message: another type, same message",
+    "group": "message-timeout-io",
+    "rung": "message",
+    "events": [
+      {
+        "type": "java.io.IOException",
+        "message": "timeout after 250ms calling 10.0.0.7:8080 for order 17"
+      }
+    ]
+  },
+  {
+    "name": "message: an unknown stack notation",
+    "group": "message-ruby",
+    "rung": "message",
+    "events": [
+      {
+        "type": "NoMethodError",
+        "message": "undefined method 'sku' for nil",
+        "stack": "ruby-nil.txt"
+      }
+    ]
+  },
+  {
+    "name": "message: quoted values",
+    "group": "message-quoted",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "no handler for \"checkout\""
+      }
+    ]
+  },
+  {
+    "name": "message: quoted values, other quotes",
+    "group": "message-quoted",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "no handler for 'refund'"
+      }
+    ]
+  },
+  {
+    "name": "message: a URL",
+    "group": "message-url",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "GET https://shop.example.com/cart/7 failed"
+      }
+    ]
+  },
+  {
+    "name": "message: another URL",
+    "group": "message-url",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "GET http://api.example.net/orders?id=3 failed"
+      }
+    ]
+  },
+  {
+    "name": "message: a UUID",
+    "group": "message-uuid",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "session 3f2b8c1e-9d4a-4b7c-8e21-0a1b2c3d4e5f expired"
+      }
+    ]
+  },
+  {
+    "name": "message: another UUID",
+    "group": "message-uuid",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "session 0A1B2C3D-4E5F-4B7C-8E21-3F2B8C1E9D4A expired"
+      }
+    ]
+  },
+  {
+    "name": "message: an IPv4 address and port",
+    "group": "message-ip",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "connect to 10.0.0.7:443 refused"
+      }
+    ]
+  },
+  {
+    "name": "message: an IPv6 address and port",
+    "group": "message-ip",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "connect to [2001:db8::1]:443 refused"
+      }
+    ]
+  },
+  {
+    "name": "message: a bare IPv6 address",
+    "group": "message-ip",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "connect to 2001:db8::7 refused"
+      }
+    ]
+  },
+  {
+    "name": "message: a timestamp",
+    "group": "message-date",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "job started 2026-03-01T10:11:12Z overran"
+      }
+    ]
+  },
+  {
+    "name": "message: a date and a time",
+    "group": "message-date",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "job started 2025-12-24 08:00:01 overran"
+      }
+    ]
+  },
+  {
+    "name": "message: a file",
+    "group": "message-file",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "cannot open /var/data/export/cart-7.csv"
+      }
+    ]
+  },
+  {
+    "name": "message: a file on another system",
+    "group": "message-file",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "cannot open C:\\data\\export\\cart-9.csv"
+      }
+    ]
+  },
+  {
+    "name": "message: a route",
+    "group": "message-route-items",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "GET /cart/7/items failed"
+      }
+    ]
+  },
+  {
+    "name": "message: the route with another id",
+    "group": "message-route-items",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "GET /cart/1190/items failed"
+      }
+    ]
+  },
+  {
+    "name": "message: another route",
+    "group": "message-route-pay",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "GET /checkout/pay failed"
+      }
+    ]
+  },
+  {
+    "name": "message: a pointer",
+    "group": "message-hex",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "object at 0x7f3a2c001b40 is stale"
+      }
+    ]
+  },
+  {
+    "name": "message: a hex run",
+    "group": "message-hex",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "object at 9fceb02d0ae598e9 is stale"
+      }
+    ]
+  },
+  {
+    "name": "message: a prefixed id",
+    "group": "message-id",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "payment pay_1Nq8Zt2eZvKYlo2C declined"
+      }
+    ]
+  },
+  {
+    "name": "message: another prefixed id",
+    "group": "message-id",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "payment pay_3Kx9Ab7cDwLMnp4E declined"
+      }
+    ]
+  },
+  {
+    "name": "message: another kind of prefixed id",
+    "group": "message-id-refund",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "payment re_3Kx9Ab7cDwLMnp4E declined"
+      }
+    ]
+  },
+  {
+    "name": "message: numbers with signs and units",
+    "group": "message-number",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "balance is -12.50 after 3 retries in 250ms"
+      }
+    ]
+  },
+  {
+    "name": "message: other numbers and units",
+    "group": "message-number",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "balance is 7 after 12 retries in 3s"
+      }
+    ]
+  },
+  {
+    "name": "message: a status code",
+    "group": "message-http-404",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "upstream returned HTTP 404"
+      }
+    ]
+  },
+  {
+    "name": "message: another status code",
+    "group": "message-http-500",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "upstream returned HTTP 500"
+      }
+    ]
+  },
+  {
+    "name": "message: a database error code",
+    "group": "message-ora-942",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "ORA-00942: table or view does not exist"
+      }
+    ]
+  },
+  {
+    "name": "message: another database error code",
+    "group": "message-ora-1017",
+    "rung": "message",
+    "events": [
+      {
+        "type": "com.example.shop.ShopException",
+        "message": "ORA-01017: table or view does not exist"
+      }
+    ]
+  },
+  {
+    "name": "type: no message, no stack",
+    "group": "type-only",
+    "rung": "type",
+    "events": [
+      {
+        "type": "com.acme.shop.TimeoutException"
+      }
+    ]
+  },
+  {
+    "name": "type: without a chain the last event counts",
+    "group": "type-only",
+    "rung": "type",
+    "events": [
+      {
+        "type": "java.lang.IllegalStateException",
+        "message": "Cart 7 is locked",
+        "stack": "java-locked-a.txt"
+      },
+      {
+        "type": "com.acme.shop.TimeoutException"
+      }
+    ]
+  },
+  {
+    "name": "real: OpenJDK 21, a cause below a stream",
+    "group": "real-java-no-price",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "java.lang.RuntimeException",
+        "message": "checkout failed",
+        "stack": "real-java-no-price.txt"
+      }
+    ]
+  },
+  {
+    "name": "real: CPython 3.14, a chained traceback through json",
+    "group": "real-python-corrupt-cart",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "shop.cart.CartError",
+        "message": "cart 7 is corrupt",
+        "stack": "real-python-corrupt-cart.txt"
+      }
+    ]
+  },
+  {
+    "name": "real: Node 24, a callback of Array.map in an async function",
+    "group": "real-node-no-price",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "TypeError",
+        "message": "Cannot read properties of undefined (reading 'cents')",
+        "stack": "real-node-no-price.txt"
+      }
+    ]
+  },
+  {
+    "name": "real: Go 1.26, a crash in a closure below sort.Slice, built with -trimpath",
+    "group": "real-go-nil-price",
+    "rung": "app frames",
+    "events": [
+      {
+        "type": "panic",
+        "message": "runtime error: invalid memory address or nil pointer dereference",
+        "stack": "real-go-nil-price.txt"
+      }
+    ]
+  }
+]

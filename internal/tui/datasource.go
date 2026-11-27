@@ -27,6 +27,10 @@ type dataSource struct {
 	sources map[string]Source
 	// runFn replaces the executor in tests; nil in production.
 	runFn func(dql string) ([]map[string]any, error)
+	// runWith stands in for the executor in a test that must see the
+	// execution options a query ran with, or answer with a whole response
+	// (notifications, metadata); it wins over runFn.
+	runWith func(dql string, opts exec.DQLExecuteOptions) (*exec.DQLQueryResponse, error)
 
 	// dict caches the semantic dictionary's field definitions for the whole
 	// session (fetched once, on the first inspector). Reads and writes both
@@ -108,6 +112,22 @@ func (d *dataSource) echoQuery(dql string) string {
 		out += " -S " + ref.ID
 	}
 	return out
+}
+
+// echoQueryExact is echoQuery for a query that must reach the shell as it
+// ran: quoted by catalog.EchoCommand, its line breaks kept, each segment id
+// a word of its own however it is spelled. limits are the flags of the
+// result limits the query ran under; they come before the segments.
+func (d *dataSource) echoQueryExact(dql string, limits ...string) string {
+	if dql == "" {
+		return ""
+	}
+	flags := make([]string, 0, len(limits)+2*len(d.segments))
+	flags = append(flags, limits...)
+	for _, ref := range d.segments {
+		flags = append(flags, "-S", ref.ID)
+	}
+	return catalog.EchoCommand("dtctl query", dql, flags...)
 }
 
 // dictOwner tags the one-shot dictionary fetch; the app routes its result
@@ -217,6 +237,13 @@ type dataMsg struct {
 	// only from its own CLI path, which the TUI never invokes), so surfacing
 	// them here is the one place the user learns a result is PARTIAL.
 	notices []exec.QueryNotification
+	// sample is set by a sampled view's fetch (catalog.Spec.Sample): records
+	// then holds the rows computed from the sample, and sample what was
+	// fetched to compute them.
+	sample *sampleFacts
+	// sampled is the response's statement that Grail read only a part of
+	// the data (metadata.grail.sampled).
+	sampled bool
 	elapsed time.Duration
 	err     error
 }
@@ -224,11 +251,12 @@ type dataMsg struct {
 // call runs a named API source asynchronously, delivering the same dataMsg
 // shape as query so owner/seq staleness handling applies unchanged. Like
 // queries, calls are never cancelled mid-flight; stale results are dropped
-// via seq.
+// via seq. The source is the one wired when the command is created
+// (fetcher says why).
 func (d *dataSource) call(owner any, seq int, name string, scope catalog.Scope, dql string) tea.Cmd {
+	src := d.sources[name]
 	return func() tea.Msg {
 		start := time.Now()
-		src := d.sources[name]
 		if src == nil {
 			return dataMsg{owner: owner, seq: seq, dql: dql, elapsed: time.Since(start),
 				err: fmt.Errorf("data source %q is not wired", name)}
@@ -261,23 +289,54 @@ func (d *dataSource) queryCapped(owner any, seq int, dql string, maxRecords int6
 }
 
 func (d *dataSource) run(owner any, seq int, dql string, maxRecords int64, enrichMetrics bool) tea.Cmd {
+	fetch, opts := d.fetcher(), d.execOpts(maxRecords, enrichMetrics)
 	return func() tea.Msg {
+		return fetch(owner, seq, dql, opts)
+	}
+}
+
+// fetcher returns the function that runs one query to its result. That
+// function blocks: only a command calls it.
+//
+// It is bound to the executor of the moment it is made, on the update loop,
+// like the options a command is created with. A command runs later, on a
+// goroutine of its own, and a context switch or a segment change in between
+// replaces the executor and the segments on this data source. A query
+// composed for one environment must not run through the wiring of the next,
+// and a command must not read fields the update loop writes.
+func (d *dataSource) fetcher() func(owner any, seq int, dql string, opts exec.DQLExecuteOptions) dataMsg {
+	executor, runFn, runWith := d.exec, d.runFn, d.runWith
+	return func(owner any, seq int, dql string, opts exec.DQLExecuteOptions) dataMsg {
 		start := time.Now()
-		if d.runFn != nil {
-			records, err := d.runFn(dql)
+		var resp *exec.DQLQueryResponse
+		var err error
+		switch {
+		case runWith != nil:
+			resp, err = runWith(dql, opts)
+		case runFn != nil:
+			records, err := runFn(dql)
 			return dataMsg{owner: owner, seq: seq, dql: dql, elapsed: time.Since(start), records: records, err: err}
+		default:
+			resp, err = executor.ExecuteQueryWithContext(context.Background(), dql, opts)
 		}
-		resp, err := d.exec.ExecuteQueryWithContext(context.Background(), dql, d.execOpts(maxRecords, enrichMetrics))
 		msg := dataMsg{owner: owner, seq: seq, dql: dql, elapsed: time.Since(start), err: rewriteSegmentVarError(err)}
 		if err == nil {
 			if resp == nil {
 				msg.err = errors.New("query cancelled")
 			} else {
-				msg.records = resp.GetRecords()
-				msg.metrics = resp.GetMetrics()
-				msg.notices = resp.GetNotifications()
+				msg.take(resp)
 			}
 		}
 		return msg
+	}
+}
+
+// take copies out of a response what a view reads.
+func (m *dataMsg) take(resp *exec.DQLQueryResponse) {
+	m.records = resp.GetRecords()
+	m.metrics = resp.GetMetrics()
+	m.notices = resp.GetNotifications()
+	if grail := resp.GetMetadata(); grail != nil {
+		m.sampled = grail.Sampled
 	}
 }

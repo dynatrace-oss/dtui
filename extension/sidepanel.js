@@ -32,7 +32,9 @@ window.addEventListener("error", (e) => {
 // keyToBytes maps a DOM keydown to the terminal byte sequence dtui expects,
 // or null to let the browser handle the key. Covers everything the TUI binds:
 // printable keys, Enter/Tab/Esc/Backspace, arrows, page/home/end, and ctrl+<x>
-// (e.g. ctrl+q reveal query, ctrl+p/ctrl+n history).
+// (e.g. ctrl+q reveal query, ctrl+p/ctrl+n history, ctrl+s server search).
+// Alt chords stay with the browser, so dtui binds nothing a view needs to
+// one.
 function keyToBytes(e) {
   if (e.metaKey || e.altKey) return null;
   const k = e.key;

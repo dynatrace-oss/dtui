@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/dynatrace-oss/dtui/internal/tui/catalog"
 )
 
@@ -164,5 +166,79 @@ func TestAPIViewMissingSourceErrors(t *testing.T) {
 	dm, ok := msg.(dataMsg)
 	if !ok || dm.err == nil || !strings.Contains(dm.err.Error(), "not wired") {
 		t.Fatalf("missing source must surface an error, got %#v", msg)
+	}
+}
+
+// runTick delivers one auto-refresh tick and returns what it set in motion:
+// the answers of the queries it issued, undelivered, and whether the next
+// tick was armed.
+func runTick(t *testing.T, a *app) (answers []dataMsg, rearmed bool) {
+	t.Helper()
+	_, cmd := a.Update(refreshTickMsg{gen: a.refreshGen})
+	var walk func(tea.Cmd)
+	walk = func(cmd tea.Cmd) {
+		if cmd == nil {
+			return
+		}
+		switch msg := cmd().(type) {
+		case tea.BatchMsg:
+			for _, c := range msg {
+				walk(c)
+			}
+		case dataMsg:
+			answers = append(answers, msg)
+		case refreshTickMsg:
+			rearmed = true
+		}
+	}
+	walk(cmd)
+	return answers, rearmed
+}
+
+// A query slower than the auto-refresh interval must still paint. A tick
+// that finds the view waiting issues no second query, which would supersede
+// the first one's answer on every tick and never show a result; it only
+// arms the next tick.
+func TestAutoRefreshWaitsForTheAnswerInFlight(t *testing.T) {
+	a := testApp(t, "hosts")
+	tv := a.top().(*tableView)
+	seedRows(t, a, []map[string]any{{"id": "HOST-1", "name": "web-1"}})
+	queries := 0
+	a.ds.runFn = func(string) ([]map[string]any, error) {
+		queries++
+		return []map[string]any{{"id": "HOST-2", "name": "web-2"}}, nil
+	}
+	press(a, key("R")) // auto-refresh on
+
+	first, rearmed := runTick(t, a)
+	if len(first) != 1 || !rearmed {
+		t.Fatalf("the first tick issued %d queries (rearmed %v), want one and the next tick", len(first), rearmed)
+	}
+	// The answer is still under way when the interval ends again.
+	second, rearmed := runTick(t, a)
+	if len(second) != 0 || queries != 1 {
+		t.Errorf("a tick while the view waits issued a query (%d answers, %d queries in all)", len(second), queries)
+	}
+	if !rearmed {
+		t.Error("a tick that waits must still arm the next one")
+	}
+	// The pause is the tick's alone: r refreshes at once, also while the
+	// view waits (a query can hang for minutes before the client gives up).
+	_, cmd := a.Update(key("r"))
+	if cmd == nil || queries != 1 {
+		t.Fatalf("r while the view waits: cmd=%v, %d queries so far", cmd != nil, queries)
+	}
+	byHand, ok := cmd().(dataMsg)
+	if !ok || queries != 2 {
+		t.Fatalf("r while the view waits issued no query (%d in all)", queries)
+	}
+	first[0] = byHand
+	a.Update(first[0])
+	if tv.loading || len(tv.rows) != 1 || catalog.Str(tv.rows[0], "id") != "HOST-2" {
+		t.Errorf("the slow answer did not paint: loading=%v rows=%v", tv.loading, tv.rows)
+	}
+	// With the answer in, the next tick refreshes again.
+	if third, _ := runTick(t, a); len(third) != 1 || queries != 3 {
+		t.Errorf("the tick after the answer issued %d queries (%d in all), want one more", len(third), queries)
 	}
 }

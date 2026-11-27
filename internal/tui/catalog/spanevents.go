@@ -1,6 +1,10 @@
 package catalog
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/dynatrace-oss/dtui/internal/exckey"
+)
 
 // Span-event / exception helpers. Validated live on two tenants: span.events
 // is an array of records discriminated by span_event.name — "exception",
@@ -29,6 +33,9 @@ type SpanException struct {
 	Message    string
 	StackTrace string
 	Location   string // "File.java:243" when the instrumentation stamped it
+	// CauseRoot is exception.is_caused_by_root: of the events of a cause
+	// chain, the one that is the root cause.
+	CauseRoot bool
 }
 
 // SpanEvents parses a span record's span.events array; nil when absent.
@@ -58,10 +65,21 @@ func (e SpanEvent) Exception() (SpanException, bool) {
 		return SpanException{}, false
 	}
 	ex := SpanException{
-		Type:    Str(e.Fields, "exception.type"),
-		Message: Str(e.Fields, "exception.message"),
-		StackTrace: firstNonEmpty(
-			Str(e.Fields, "exception.stack_trace"), Str(e.Fields, "exception.stacktrace")),
+		Type:       Str(e.Fields, "exception.type"),
+		Message:    Str(e.Fields, "exception.message"),
+		StackTrace: Str(e.Fields, "exception.stack_trace"),
+	}
+	// Grail's spelling first; one of white space alone does not hide the
+	// other.
+	if strings.TrimSpace(ex.StackTrace) == "" {
+		ex.StackTrace = Str(e.Fields, "exception.stacktrace")
+	}
+	// The flag is a boolean, or a string attribute that spells one.
+	switch root := e.Fields["exception.is_caused_by_root"].(type) {
+	case bool:
+		ex.CauseRoot = root
+	case string:
+		ex.CauseRoot = root == "true"
 	}
 	if file := Str(e.Fields, "exception.file.full"); file != "" {
 		ex.Location = file
@@ -84,14 +102,32 @@ func SpanExceptions(rec map[string]any) []SpanException {
 	if cached, ok := rec[spanExcKey].([]SpanException); ok {
 		return cached
 	}
+	excs := parseSpanExceptions(rec)
+	rec[spanExcKey] = excs
+	return excs
+}
+
+// parseSpanExceptions is SpanExceptions without the memo: it writes nothing
+// to the record, for a caller that reads each record once.
+func parseSpanExceptions(rec map[string]any) []SpanException {
 	var excs []SpanException
 	for _, ev := range SpanEvents(rec) {
 		if ex, ok := ev.Exception(); ok {
 			excs = append(excs, ex)
 		}
 	}
-	rec[spanExcKey] = excs
 	return excs
+}
+
+// FingerprintExceptions computes the grouping key of a span's exception
+// events (exckey.FingerprintExceptions); false when no event gives a type, a
+// message or a frame a reader can use.
+func FingerprintExceptions(excs []SpanException) (exckey.ExceptionFingerprint, bool) {
+	events := make([]exckey.Event, len(excs))
+	for i, ex := range excs {
+		events[i] = exckey.Event{Type: ex.Type, Message: ex.Message, StackTrace: ex.StackTrace, Root: ex.CauseRoot}
+	}
+	return exckey.FingerprintExceptions(events)
 }
 
 // ExceptionTypeShort compresses a fully-qualified exception type for a

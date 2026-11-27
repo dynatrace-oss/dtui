@@ -1,0 +1,8 @@
+Example.Shop.Checkout.CheckoutException: checkout failed
+ ---> System.InvalidOperationException: Cart 7 is locked
+   at Example.Shop.Cart.CartService.AddItem(String sku, Int32 quantity) in /src/Shop/Cart/CartService.cs:line 42
+   at Example.Shop.Cart.CartController.Post(AddItemRequest request) in /src/Shop/Cart/CartController.cs:line 17
+   --- End of inner exception stack trace ---
+   at Example.Shop.Checkout.CheckoutService.Run(Order order) in /src/Shop/Checkout/CheckoutService.cs:line 88
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Routing.EndpointMiddleware.Invoke(HttpContext httpContext)

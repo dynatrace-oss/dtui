@@ -1,0 +1,4 @@
+com.acme.shop.checkout.CheckoutException: checkout failed
+	at com.acme.shop.checkout.CheckoutService.run(CheckoutService.java:30)
+	at com.acme.shop.checkout.CheckoutController.post(CheckoutController.java:12)
+	at java.base/java.lang.Thread.run(Thread.java:833)

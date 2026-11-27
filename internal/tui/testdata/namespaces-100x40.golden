@@ -35,6 +35,6 @@
   first seen: Apr 28 13:07
   last seen: 11:45:00
   tags:k8s.labels
- … (enter opens the full record)
+ … (d opens the details)
  enter workloads  d details  l logs  s traces  p problems  v events  / filter  f facets  J/K sort  …
  ≡ dtctl query 'smartscapeNodes "K8S_NAMESPACE" | fields id, name, type, cluster = k8s.cluster.name…

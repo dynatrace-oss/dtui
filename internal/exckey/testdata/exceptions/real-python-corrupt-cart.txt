@@ -1,0 +1,26 @@
+Traceback (most recent call last):
+  File "/srv/shop/app/shop/cart.py", line 10, in load
+    return json.loads(raw)
+           ~~~~~~~~~~^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/json/__init__.py", line 352, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/json/decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/json/decoder.py", line 361, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ~~~~~~~~~~~~~~^^^^^^^^
+json.decoder.JSONDecodeError: Expecting ',' delimiter: line 1 column 32 (char 31)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/srv/shop/app/checkout.py", line 13, in main
+    checkout('[{"cents": 2500}, {"cents": 900')
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/shop/app/checkout.py", line 7, in checkout
+    items = cart.load(raw)
+  File "/srv/shop/app/shop/cart.py", line 12, in load
+    raise CartError("cart 7 is corrupt") from err
+shop.cart.CartError: cart 7 is corrupt

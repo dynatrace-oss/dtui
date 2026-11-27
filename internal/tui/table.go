@@ -2,6 +2,8 @@ package tui
 
 import (
 	"fmt"
+	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -26,6 +28,11 @@ type tableView struct {
 	all  []map[string]any // as fetched
 	rows []map[string]any // after /-filter and sort
 	scroller
+
+	// sample describes the records v.all was computed from, on a sampled
+	// spec (catalog.Spec.Sample); nil on every other view. It arrives with
+	// the rows and is replaced with them.
+	sample *sampleFacts
 
 	loading bool
 	err     error
@@ -168,7 +175,9 @@ func (v *tableView) baseColumns() []catalog.Column {
 // key name. No Enrich — these are flat fields already present in the record.
 func (v *tableView) primaryTagColumns() []catalog.Column {
 	keys := v.ds.primaryTags
-	if len(keys) == 0 {
+	// The rows of a sampled view are computed and carry no tag: a column
+	// for one would be empty on every row.
+	if len(keys) == 0 || v.spec.Sample != nil {
 		return nil
 	}
 	cols := make([]catalog.Column, 0, len(keys))
@@ -256,9 +265,9 @@ func (v *tableView) setLens(i int, wrap bool) tea.Cmd {
 // later in the pipeline; the bucket filter prunes physical reads at the
 // source), the record's bucket projected in on bucket-backed views (skipped
 // for API views — their query feeds an analyzer, not the table), any
-// primary-tag fieldsAdd stages for ProjectPrimaryTags specs, and the
-// remaining facet filters before the sort/limit tail. API-backed views
-// without a query render "".
+// primary-tag fieldsAdd stages for ProjectPrimaryTags specs, the remaining
+// facet filters before the sort/limit tail, and last a sampled view's
+// projection. API-backed views without a query render "".
 //
 // For MetricRoster specs the path differs: facets and searches embed into
 // filter:{} pre-aggregation via Scope.FilterConds rather than being injected
@@ -271,7 +280,9 @@ func (v *tableView) composeDQL() string {
 	if v.spec.MetricRoster {
 		return v.composeRosterDQL()
 	}
-	dql := catalog.ComposeQuery(v.spec.Query(v.scope), v.searches, v.facets, v.spec.API == "")
+	// A sampled view projects its records last (SampleSpec.Fields), which
+	// would drop a bucket projected up here.
+	dql := catalog.ComposeQuery(v.spec.Query(v.scope), v.searches, v.facets, v.spec.API == "" && v.spec.Sample == nil)
 	// Primary-tag column injection. Two paths depending on query shape:
 	//   InjectPrimaryTags set → spec uses | fields/| summarize; hook embeds
 	//     keys inside the projection boundary before the body is finalized.
@@ -288,6 +299,9 @@ func (v *tableView) composeDQL() string {
 			}
 			dql = catalog.InjectStages(dql, stages)
 		}
+	}
+	if v.spec.Sample != nil {
+		dql = v.spec.Sample.Project(dql)
 	}
 	return dql
 }
@@ -391,6 +405,9 @@ func (v *tableView) fetch() tea.Cmd {
 	if v.spec.API != "" {
 		return v.ds.call(v, v.seq, v.spec.API, v.scope, v.dql)
 	}
+	if v.spec.Sample != nil {
+		return v.ds.sample(v, v.seq, v.dql, v.spec.Sample, sampleWindow(v.scope.Timeframe))
+	}
 	if v.spec.RecordCap > 0 {
 		return v.ds.queryCapped(v, v.seq, v.dql, v.spec.RecordCap)
 	}
@@ -482,7 +499,41 @@ func (v *tableView) Echo() string {
 	if v.dql == "" {
 		return ""
 	}
+	if s := v.spec.Sample; s != nil {
+		// The sample was fetched under two limits (sampleOpts). Without
+		// them the command returns another set where the size limit cut it.
+		return v.ds.echoQueryExact(v.dql,
+			"--max-result-records", strconv.FormatInt(s.Rows, 10),
+			"--max-result-bytes", strconv.FormatInt(s.Bytes, 10))
+	}
 	return v.ds.echoQuery(v.dql)
+}
+
+// ExitNote says what o and c hand over on a sampled view: the query that
+// fetched the sample returns its records one by one, not the rows computed
+// from them, and no query computes those.
+func (v *tableView) ExitNote() string {
+	if v.spec.Sample == nil {
+		return ""
+	}
+	return "(the sampled " + v.spec.Sample.Noun + "s, ungrouped)"
+}
+
+// YankText supplies what the spec names for the selected row to the global
+// 'y' (catalog.Spec.Yank); views that name nothing keep the app's default.
+func (v *tableView) YankText() (text, label string, ok bool) {
+	rec := v.selected()
+	if v.spec.Yank == nil || rec == nil {
+		return "", "", false
+	}
+	text, label = v.spec.Yank(rec)
+	return text, label, text != ""
+}
+
+// sampleLine is a sampled view's header: what the rows below were computed
+// from ("" on other views and before the first sample).
+func (v *tableView) sampleLine() (text string, warn bool) {
+	return v.sample.line()
 }
 
 // DQL reveals the view's generated query (ctrl+q).
@@ -503,6 +554,9 @@ func (v *tableView) Hints() []keyHint {
 		return []keyHint{{"type", "narrow · * = pattern"}, {"↑/↓", "move"}, {"enter", "apply filter"}, {"esc", "back"}}
 	}
 	if v.filtering {
+		if v.spec.Sample != nil {
+			return []keyHint{{"type", "filter rows"}, {"enter", "keep filter"}, {"ctrl+s", "server search"}, {"esc", "clear"}}
+		}
 		return []keyHint{{"type", "filter rows"}, {"enter", "add server search"}, {"alt+enter", "replace"}, {"esc", "clear"}}
 	}
 	var hints []keyHint
@@ -656,7 +710,7 @@ func (v *tableView) Update(msg tea.Msg) tea.Cmd {
 		v.loading = false
 		v.err = msg.err
 		if msg.err == nil {
-			v.all = msg.records
+			v.all, v.sample = msg.records, msg.sample
 			if v.spec.Decode != nil {
 				v.all = v.spec.Decode(v.all)
 			}
@@ -754,7 +808,7 @@ func (v *tableView) handleKey(msg tea.KeyMsg) tea.Cmd {
 	}
 	if v.filtering {
 		switch msg.String() {
-		case "enter", "alt+enter":
+		case "enter", "alt+enter", "ctrl+s":
 			v.filtering = false
 			v.filterInput.Blur()
 			// Enter promotes the typed text to a server-side search over the
@@ -763,12 +817,23 @@ func (v *tableView) handleKey(msg tea.KeyMsg) tea.Cmd {
 			// client filter clears: server-matched rows may match on fields
 			// no column shows, and hiding them again would lie. Terms stack
 			// (each is a chained | search stage); alt+enter replaces the
-			// active terms with this one instead.
+			// active terms with this one instead. ctrl+s adds one like
+			// enter, on every table: it is the key that says "search", for
+			// the views where enter does not.
 			if term := strings.TrimSpace(v.filter); term != "" {
 				// A view without a query has nothing to inject a server
 				// search into — the client filter stays as the narrowing.
 				if v.spec.Query == nil {
 					return status(fmt.Sprintf("client filter %q (no server search on %s)", term, v.spec.Name))
+				}
+				// The rows of a sampled view are computed here: the text may
+				// name what no fetched record holds (an issue key), and a
+				// server search for it would empty the view. Enter keeps the
+				// filter on the rows; ctrl+s searches the records. Not an
+				// Alt chord: the browser side panel keeps those, and a
+				// terminal sends one only when Option is set to act as Meta.
+				if v.spec.Sample != nil && msg.String() == "enter" {
+					return status(fmt.Sprintf("filter %q kept on the rows (ctrl+s searches the %ss)", term, v.spec.Sample.Noun))
 				}
 				v.filterInput.SetValue("")
 				v.filter = ""
@@ -988,6 +1053,9 @@ func (v *tableView) pageSize() int {
 	if len(v.spec.Lenses) > 0 {
 		chrome++ // the lens strip line
 	}
+	if text, _ := v.sampleLine(); text != "" {
+		chrome++
+	}
 	if v.previewBottom() {
 		chrome += previewBottomH + 1 // panel plus its rule
 	}
@@ -1002,6 +1070,11 @@ func (v *tableView) pageSize() int {
 func (v *tableView) applyFilter() {
 	if v.filter == "" {
 		v.rows = v.all
+		if v.sortCol >= 0 {
+			// A column sort orders a copy: the fetched order is what J
+			// cycles back to, and on some views it is a ranking.
+			v.rows = slices.Clone(v.all)
+		}
 	} else {
 		needle := strings.ToLower(v.filter)
 		v.rows = nil
@@ -1009,6 +1082,9 @@ func (v *tableView) applyFilter() {
 			var cells []string
 			for _, c := range v.columns() {
 				cells = append(cells, c.Text(rec))
+			}
+			if s := v.spec.Sample; s != nil && s.Match != nil {
+				cells = append(cells, s.Match(rec))
 			}
 			if strings.Contains(strings.ToLower(strings.Join(cells, " ")), needle) {
 				v.rows = append(v.rows, rec)
@@ -1030,7 +1106,7 @@ func (v *tableView) View(width, height int) string {
 	if v.reader {
 		return v.renderReader(width, height)
 	}
-	return previewLayout(v.ds.previewOn(), width, height, v.renderTable, v.previewLines)
+	return previewLayout(v.ds.previewOn(), width, height, v.renderTable, v.previewLines, v.foldHint())
 }
 
 func (v *tableView) renderTable(width, height int) string {
@@ -1092,6 +1168,18 @@ func (v *tableView) renderTable(width, height int) string {
 		return b.String()
 	}
 
+	// A sampled view says what its counts are counts of, directly above
+	// them.
+	if text, warn := v.sampleLine(); text != "" {
+		chrome++
+		style := theme.Dim
+		if warn {
+			style = theme.Warn
+		}
+		b.WriteString(ansi.Truncate(" "+style.Render(text), width, "…"))
+		b.WriteString("\n")
+	}
+
 	// One gutter cell marks the cursor row; columns share the rest.
 	widths := v.columnWidths(width - 1)
 
@@ -1123,16 +1211,25 @@ func (v *tableView) renderTable(width, height int) string {
 	}
 	if len(v.rows) == 0 && !v.loading {
 		if v.filter != "" && len(v.all) > 0 {
-			b.WriteString(theme.Dim.Render(fmt.Sprintf("  no rows match %q (%d fetched — esc clears the filter)", v.filter, len(v.all))))
-		} else {
-			empty := "∅ no data in timeframe (last " + v.scope.Timeframe.Label + ")"
+			of := fmt.Sprintf("%d fetched", len(v.all))
+			if v.spec.Sample != nil {
+				// What was fetched is counted in the line above; these are
+				// the rows computed from it.
+				of = fmt.Sprintf("of %d rows", len(v.all))
+			}
+			b.WriteString(theme.Dim.Render(fmt.Sprintf("  no rows match %q (%s — esc clears the filter)", v.filter, of)))
+		} else if _, cut := v.sampleLine(); !cut {
+			// A sample that was cut short is not known to be empty: its
+			// line above the header says what happened, and nothing here
+			// may add that the timeframe holds no data.
+			window := sampleWindow(v.scope.Timeframe)
+			empty := "∅ no data in timeframe (" + window + ")"
 			if len(v.spec.Lenses) > 0 {
 				what := v.spec.LensAt(v.scope.Lens).Name
 				if what == "all" {
 					what = "data" // "no all in timeframe" reads broken
 				}
-				empty = fmt.Sprintf("∅ no %s in timeframe (last %s) — [/] switches lens",
-					what, v.scope.Timeframe.Label)
+				empty = fmt.Sprintf("∅ no %s in timeframe (%s) — [/] switches lens", what, window)
 			}
 			b.WriteString("\n" + lipgloss.PlaceHorizontal(width, lipgloss.Center, theme.Dim.Render(empty)))
 		}

@@ -1,6 +1,7 @@
 package catalog
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -97,5 +98,40 @@ func TestQueryConventionSortLimitTail(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+// A sampled view (Spec.Sample) restates by hand what its query and the
+// table rely on. Each omission fails silently or late: Rows 0 reports every
+// sample as cut, Bytes 0 leaves the response unbounded, a nil Group panics
+// in the fetch command, and a Rows that is not the query's own limit tells
+// a full sample from a cut one at the wrong count.
+func TestSampledSpecsAreComplete(t *testing.T) {
+	sampled := 0
+	for _, spec := range All() {
+		s := spec.Sample
+		if s == nil {
+			continue
+		}
+		sampled++
+		if s.Noun == "" || s.Time == "" || s.Group == nil {
+			t.Errorf("%s: a sample needs a Noun, a Time field and a Group: %+v", spec.Name, s)
+		}
+		if s.Rows <= 0 || s.Bytes <= 0 {
+			t.Errorf("%s: a sample needs both limits, got %d rows and %d bytes", spec.Name, s.Rows, s.Bytes)
+		}
+		if spec.API != "" || spec.Decode != nil || spec.Query == nil {
+			t.Errorf("%s: a sampled view runs one DQL query and groups in its fetch command: no API source, no Decode", spec.Name)
+			continue
+		}
+		for lens := range max(1, len(spec.Lenses)) {
+			lines := strings.Split(StageLines(spec.Query(Scope{Timeframe: DefaultTimeframe, Lens: lens})), "\n")
+			if want := fmt.Sprintf("| limit %d", s.Rows); strings.TrimSpace(lines[len(lines)-1]) != want {
+				t.Errorf("%s (lens %d): the query ends on %q, want %q, the sample's Rows", spec.Name, lens, lines[len(lines)-1], want)
+			}
+		}
+	}
+	if sampled == 0 {
+		t.Error("no spec has a Sample: the exceptions view lost its hook")
 	}
 }

@@ -1,0 +1,40 @@
+ ▛▞▟ dtui  ·  context:test  ·  ● readonly                                                                       last 2h
+ exceptions ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 6 rows · 1s                                                          │ java.lang.IllegalStateException
+ row limit: newest 1000 exception spans back to 11:48:19; any older … │
+ COUNT  LAST          EXCEPTION         MESSAGE   SERVICE     BY      │  issue: e1:8d92c7fb9207
+▌  650  11:59:59      lang.IllegalSta…  cart <n…  +1 cart     app     │  in sample: 650 spans
+   100  11:59:56      sql.SQLException  connect…  orders      app     │  grouped by: app frames
+   100  11:59:53      TimeoutError      upstrea…  payments    app     │  message
+    50  11:59:49      TypeError         Cannot …  frontend    app     │   cart <n> is locked
+    50  11:59:47      HttpError         HTTP 50…  inventory   message │  thrown at
+    50  11:59:45      (no key)                    legacy-ba…          │   com.example.shop.cart.CartService.addItem
+                                                                      │  then
+                                                                      │   com.example.shop.web.CartController.post
+                                                                      │  services: cart, checkout
+                                                                      │  last seen: 11:59:59
+                                                                      │  first seen: 11:48:21
+                                                                      │
+                                                                      │  trace: 00000000… (enter opens)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ enter waterfall  l trace-logs  / filter  f facets  J/K sort  : views  t timeframe  S segments  r refresh  ? help  q qu…
+ ≡ dtctl query 'fetch spans, from:now() - 2h | filter iAny(span.events[][span_event.name] == "exception") | sort start_…

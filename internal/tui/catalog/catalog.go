@@ -291,6 +291,14 @@ type Spec struct {
 	// Live Debugger snapshots arrive as protobuf payloads and are decoded
 	// into readable variables and a stack here.
 	Decode func(records []map[string]any) []map[string]any
+	// Sample marks a view whose rows are computed from a bounded sample of
+	// the fetched records instead of being those records (nil = the records
+	// are the rows): the exceptions view groups the newest exception spans
+	// into issues. See SampleSpec.
+	Sample *SampleSpec
+	// Yank names what `y` copies for a row and how the status line calls it
+	// (nil, or "" text, leaves the default: the row's entity or record id).
+	Yank func(rec map[string]any) (text, label string)
 	// Dynamic derives the column set from the fetched records (the record
 	// sampler browses arbitrary tables); Columns is the empty-result
 	// fallback.
@@ -476,6 +484,48 @@ func ScanMetricDims(records []map[string]any, exclude map[string]bool, declaredK
 	return dims, primaryTagKeys
 }
 
+// SampleSpec describes a view that shows rows computed from a sample: the
+// query fetches at most Rows records and Bytes of result, and Group turns
+// them into the rows. A count in such a row is a share of the records that
+// arrived, never of the timeframe, so the view says above its table how many
+// arrived, how far back they reach and what cut them short (ADR-0007,
+// applied to completeness).
+//
+// Group runs where the records were fetched, off the update loop, on records
+// nothing else holds: it must be pure, and its rows must not keep the
+// records alive.
+type SampleSpec struct {
+	// Noun names one fetched record in the header ("exception span"); the
+	// plural adds an s.
+	Noun string
+	// Time is the record field the sample is ordered by, newest first: the
+	// header reads how far back the sample reaches from it.
+	Time string
+	// Rows is the query's own limit, restated so the view can tell a sample
+	// that hit it. Bytes caps the result's size.
+	Rows, Bytes int64
+	// Fields is the projection of the fetched records ("" = whole records):
+	// the field list of a `| fields` stage that Project appends behind the
+	// composed query. It is kept out of the query text so narrowing stages
+	// are placed by the one rule every query follows (tailStart) and see the
+	// whole record.
+	Fields string
+	Group  func(records []map[string]any) []map[string]any
+	// Match is text of a row that the `/` filter matches beside its cells
+	// (nil = the cells alone): what Group computed and no fetched record
+	// holds, like the issue key someone pasted from a ticket.
+	Match func(row map[string]any) string
+}
+
+// Project appends the sample's projection to a composed list query: the last
+// stage, behind the searches, the facets and the limit.
+func (s *SampleSpec) Project(dql string) string {
+	if s.Fields == "" {
+		return dql
+	}
+	return dql + "\n| fields " + s.Fields
+}
+
 // UsesScope reports whether a view's query can compose an entity scope.
 func (s *Spec) UsesScope() bool { return s.Kind == KindSignal || s.EntityScoped }
 
@@ -562,9 +612,11 @@ type HopSpec struct {
 	Apply func(s Scope, records []map[string]any) []Entity
 }
 
-// specs is the ordered registry; order drives command-bar suggestions.
+// specs is the ordered registry; order drives command-bar suggestions, so a
+// new view goes behind the ones whose prefixes people already type
+// (exceptions after events: `:e` stays events).
 var specs = []*Spec{
-	problemsSpec, servicesSpec, hostsSpec, processesSpec, logsSpec, tracesSpec, eventsSpec,
+	problemsSpec, servicesSpec, hostsSpec, processesSpec, logsSpec, tracesSpec, eventsSpec, exceptionsSpec,
 	podsSpec, containersSpec, workloadsSpec, namespacesSpec, nodesSpec, clustersSpec, fleetSpec, modulesSpec, agentLogsSpec,
 	awsSpec, azureSpec, entitiesSpec, resourcesSpec,
 	frontendsSpec, databasesSpec, genaiSpec, vulnsSpec, attacksSpec, metricsSpec,

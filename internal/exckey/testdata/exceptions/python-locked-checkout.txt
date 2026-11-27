@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/app/shop/api.py", line 17, in post
+    checkout.add_item(sku)
+  File "/app/shop/checkout.py", line 42, in add_item
+    self.session.commit()
+  File "/usr/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 1900, in commit
+    trans.commit(_to_root=True)
+ValueError: cart 7 is locked

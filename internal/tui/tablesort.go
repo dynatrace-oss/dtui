@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/dynatrace-oss/dtui/internal/tui/catalog"
 )
@@ -45,7 +46,7 @@ func (v *tableView) sortRows() {
 }
 
 // defaultDesc picks the natural direction for a freshly selected sort column:
-// numbers biggest-first (CPU, restarts), text A-to-Z.
+// numbers biggest-first (CPU, restarts), instants newest-first, text A-to-Z.
 func (v *tableView) defaultDesc() bool {
 	if v.sortCol < 0 || v.sortCol >= len(v.columns()) {
 		return false
@@ -56,19 +57,25 @@ func (v *tableView) defaultDesc() bool {
 		if empty {
 			continue
 		}
-		_, numeric := key.(float64)
-		return numeric
+		switch key.(type) {
+		case float64, time.Time:
+			return true
+		}
+		return false
 	}
 	return false
 }
 
 // sortable normalizes a sort key: numbers (including Grail's stringified
-// longs and durations) become float64, everything else lowercase text.
+// longs and durations) become float64, an instant (a column's Sort returning
+// a time.Time) stays one, everything else lowercase text.
 func sortable(key any) (norm any, empty bool) {
 	switch val := key.(type) {
 	case nil:
 		return nil, true
 	case float64:
+		return val, false
+	case time.Time:
 		return val, false
 	case int:
 		return float64(val), false
@@ -96,8 +103,14 @@ func sortable(key any) (norm any, empty bool) {
 	}
 }
 
-// cmpSortable compares two normalized sort keys; numbers order before text.
+// cmpSortable compares two normalized sort keys; numbers order before
+// instants, instants before text.
 func cmpSortable(a, b any) int {
+	at, aTime := a.(time.Time)
+	bt, bTime := b.(time.Time)
+	if aTime && bTime {
+		return at.Compare(bt)
+	}
 	af, aNum := a.(float64)
 	bf, bNum := b.(float64)
 	switch {
@@ -112,6 +125,10 @@ func cmpSortable(a, b any) int {
 	case aNum:
 		return -1
 	case bNum:
+		return 1
+	case aTime:
+		return -1
+	case bTime:
 		return 1
 	}
 	return strings.Compare(a.(string), b.(string))

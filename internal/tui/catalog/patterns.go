@@ -80,12 +80,6 @@ var patternsSpec = &Spec{
 	Drills:      map[string]string{},
 }
 
-// shellSingleQuote wraps s in single quotes for a POSIX shell, closing and
-// reopening the quotes around any embedded single quote.
-func shellSingleQuote(s string) string {
-	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
-}
-
 // PatternOf extracts the DPL pattern a patterns-view row stands for.
 func PatternOf(rec map[string]any) string { return Str(rec, "patternExpression") }
 

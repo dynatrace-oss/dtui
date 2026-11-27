@@ -344,7 +344,7 @@ func recordStart(rec map[string]any) time.Time {
 
 func (v *waterfallView) View(width, height int) string {
 	v.width, v.height = width, height
-	return previewLayout(v.ds.previewOn(), width, height, v.renderBody, v.previewLines)
+	return previewLayout(v.ds.previewOn(), width, height, v.renderBody, v.previewLines, foldHintEnter)
 }
 
 func (v *waterfallView) renderBody(width, height int) string {

@@ -1,0 +1,40 @@
+ ▛▞▟ dtui  ·  context:test  ·  ● readonly                                                   last 2h
+ exceptions ───────────────────────────────────────────────────────────────────────────────────────
+ 6 rows · 1s
+ row limit: newest 1000 exception spans back to 11:48:19; any older ones are not counted · last 2h
+ COUNT  LAST          EXCEPTION               MESSAGE                          SERVICE       BY
+▌  650  11:59:59      lang.IllegalStateExce…  cart <n> is locked               +1 cart       app
+   100  11:59:56      sql.SQLException        connection to <ip> refused       orders        app
+   100  11:59:53      TimeoutError            upstream timed out after <n>     payments      app
+    50  11:59:49      TypeError               Cannot read properties of unde…  frontend      app
+    50  11:59:47      HttpError               HTTP 503 from stock service      inventory     message
+    50  11:59:45      (no key)                                                 legacy-batch
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ java.lang.IllegalStateException
+
+  issue: e1:8d92c7fb9207
+  in sample: 650 spans
+  grouped by: app frames
+  message
+   cart <n> is locked
+  thrown at
+ … (d opens the full record)
+ enter waterfall  l trace-logs  / filter  f facets  J/K sort  : views  t timeframe  S segments  r r…
+ ≡ dtctl query 'fetch spans, from:now() - 2h | filter iAny(span.events[][span_event.name] == "excep…

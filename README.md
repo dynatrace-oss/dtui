@@ -101,7 +101,7 @@ More flows (Kubernetes crashloop, slow frontend) are in the
 | **Infrastructure** | Hosts, processes, containers and extensions |
 | **Clouds** | AWS, Azure, GCP |
 | **Kubernetes** | Clusters, nodes, namespaces, workloads, pods |
-| **Distributed Traces** | Traces with span waterfall and logs in context |
+| **Distributed Traces** | Traces with span waterfall and logs in context; exceptions grouped into issues |
 | **Logs** | Logs with pattern clustering |
 | **Metrics** | Metrics with charts |
 | **Real User Monitoring** | RUM Applications, Sessions and user events |
@@ -131,7 +131,7 @@ credential store. Details in [docs/design/tui.md](docs/design/tui.md) and the
 | Key | Does |
 |---|---|
 | `:` | Command bar: jump to any view (`:pods`, `:svc`, `:logs error`, `:trace <id>`, `:query <dql>`, `:ctx prod`) |
-| `/` | Quick search in the current view (enter: server search; jumps restore that view's last filter; `F` / esc forgets it) |
+| `/` | Quick search in the current view (enter: server search; on `:exceptions` enter keeps the filter on the issues and `ctrl+s` is the server search; jumps restore that view's last filter; `F` / esc forgets it) |
 | `enter` | Open the detail page |
 | `l` `s` `m` `p` `v` `u` | Logs, traces, metrics, problems, events, SLOs, pre-scoped to the selection |
 | `x` | Related entities (topology hop) |

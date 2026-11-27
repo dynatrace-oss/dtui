@@ -10,6 +10,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/dynatrace-oss/dtctl/pkg/exec"
+	"github.com/dynatrace-oss/dtui/internal/tui/catalog"
 )
 
 func segStubSource(list []SegmentOption, err error) SegmentLister {
@@ -807,5 +808,43 @@ func TestPrimaryTagFacetCandidatesFromRecord(t *testing.T) {
 func TestExecOptsTagsClientContext(t *testing.T) {
 	if got := (&dataSource{}).execOpts(1, false).ClientContext; got != "dtui" {
 		t.Errorf("ClientContext = %q, want %q", got, "dtui")
+	}
+}
+
+// A command belongs to the wiring it was created under. A context switch or
+// a segment change replaces the executor, the API sources and the segments
+// on the shared data source; a command that is created before and runs after
+// must not send its query, composed for the old environment, through the new
+// one.
+func TestCommandRunsOnTheWiringItWasCreatedUnder(t *testing.T) {
+	runOn := func(name string) func(string, exec.DQLExecuteOptions) (*exec.DQLQueryResponse, error) {
+		return func(_ string, opts exec.DQLExecuteOptions) (*exec.DQLQueryResponse, error) {
+			return &exec.DQLQueryResponse{Records: []map[string]any{{"ran on": name, "segments": len(opts.Segments)}}}, nil
+		}
+	}
+	source := func(name string) Source {
+		return func(context.Context, catalog.Scope, string) ([]map[string]any, error) {
+			return []map[string]any{{"ran on": name}}, nil
+		}
+	}
+	d := &dataSource{runWith: runOn("A"), sources: map[string]Source{"list": source("A")},
+		segments: []exec.FilterSegmentRef{{ID: "uid-a"}}}
+	cmds := map[string]tea.Cmd{
+		"query":  d.query(nil, 1, "fetch logs"),
+		"sample": d.sample(nil, 1, "fetch spans", &catalog.SampleSpec{Rows: 10, Group: func(r []map[string]any) []map[string]any { return r }}, "last 2h"),
+		"call":   d.call(nil, 1, "list", catalog.Scope{}, ""),
+	}
+	// The switch lands before the commands run.
+	d.runWith, d.sources, d.segments = runOn("B"), map[string]Source{"list": source("B")}, nil
+
+	for name, cmd := range cmds {
+		msg := cmd().(dataMsg)
+		if len(msg.records) != 1 || msg.records[0]["ran on"] != "A" {
+			t.Errorf("%s ran on %v, want the wiring it was created under", name, msg.records)
+			continue
+		}
+		if name != "call" && msg.records[0]["segments"] != 1 {
+			t.Errorf("%s ran with %v segments, want the one active when it was created", name, msg.records[0]["segments"])
+		}
 	}
 }

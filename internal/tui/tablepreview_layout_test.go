@@ -27,7 +27,7 @@ func layoutProbe(width, height, n int) (out string, bodyW, bodyH, paneW int) {
 		}
 		return lines
 	}
-	return ansi.Strip(previewLayout(true, width, height, body, preview)), bodyW, bodyH, paneW
+	return ansi.Strip(previewLayout(true, width, height, body, preview, foldHintEnter)), bodyW, bodyH, paneW
 }
 
 func TestPreviewLayoutGates(t *testing.T) {

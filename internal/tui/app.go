@@ -138,6 +138,21 @@ type dqlProvider interface {
 	DQL() string
 }
 
+// exitNoter is implemented by views whose two exits (o's Notebook, c's
+// echo) hand over something other than the rows on screen; the note says
+// what, wherever an exit reports what it did.
+type exitNoter interface {
+	ExitNote() string
+}
+
+// exitNote is the top view's note on its exits ("" for most views).
+func exitNote(v viewModel) string {
+	if n, ok := v.(exitNoter); ok {
+		return n.ExitNote()
+	}
+	return ""
+}
+
 // traceProvider is implemented by views standing on one trace (waterfall).
 type traceProvider interface {
 	TraceID() string
@@ -543,6 +558,12 @@ func (a *app) dispatch(msg tea.Msg) tea.Cmd {
 		if msg.gen != a.refreshGen || refreshIntervals[a.refreshIdx] == 0 {
 			return nil
 		}
+		// A view still waiting keeps its request: a refresh would supersede
+		// it, and with a query slower than the interval every answer would
+		// be dropped for the next one and none ever painted.
+		if a.busy() {
+			return a.scheduleRefresh()
+		}
 		return tea.Batch(a.top().Refresh(), a.scheduleRefresh())
 
 	case spinnerTickMsg:
@@ -689,7 +710,13 @@ func (a *app) handleKey(msg tea.KeyMsg) tea.Cmd {
 		case "c":
 			if echo := top.Echo(); echo != "" {
 				yank(echo)
-				return status("copied: " + echo)
+				// The clipboard takes the echo as it is; the status line
+				// shows it, and what is shown is text.
+				shown := catalog.SafeText(flatten(echo))
+				if note := exitNote(top); note != "" {
+					return status("copied " + note + ": " + shown)
+				}
+				return status("copied: " + shown)
 			}
 			return nil
 		case "o":
@@ -1291,7 +1318,7 @@ func (a *app) renderFooter() string {
 		line2 = " " + theme.Echo.Render("≈ "+a.notice.text)
 	default:
 		if echo := a.top().Echo(); echo != "" {
-			line2 = " " + theme.Echo.Render("≡ "+echo)
+			line2 = " " + theme.Echo.Render("≡ "+catalog.SafeText(flatten(echo)))
 		}
 	}
 	return line1 + "\n" + ansi.Truncate(line2, a.width, "…")

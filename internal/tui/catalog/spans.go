@@ -50,7 +50,7 @@ var spanLenses = []Lens{
 	// to a legal scalar boolean — row-equivalent to string-matching the
 	// toString-serialized array, without muting the index (validated live).
 	{Name: "exceptions", Desc: "spans that recorded exception events (mostly non-failed spans)",
-		Filter: `iAny(span.events[][span_event.name] == "exception")`, Columns: exceptionSpanColumns},
+		Filter: exceptionSpanFilter, Columns: exceptionSpanColumns},
 	{Name: "server", Desc: "incoming requests handled by a service",
 		Filter: `span.kind == "server"`},
 	{Name: "client", Desc: "outgoing calls (HTTP, RPC, DB drivers)",
@@ -68,6 +68,10 @@ var spanLenses = []Lens{
 		Filter: "isNotNull(gen_ai.operation.name) or isNotNull(llm.request.type)", Columns: genaiSpanColumns},
 	{Name: "all", Desc: "every span, unfiltered"},
 }
+
+// exceptionSpanFilter selects the spans that recorded an exception event
+// (the exceptions lens and the exceptions view).
+const exceptionSpanFilter = `iAny(span.events[][span_event.name] == "exception")`
 
 var tracesSpec = &Spec{
 	Name:    "traces",
