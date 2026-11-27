@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dynatrace-oss/dtctl/pkg/exec"
+	"github.com/Dynatrace/dtctl/pkg/exec"
 )
 
 func TestClassifyNoticeByType(t *testing.T) {

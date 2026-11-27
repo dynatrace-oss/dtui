@@ -31,14 +31,15 @@ builds:
     goarch:
       - amd64
       - arm64
-    # Match `make build`: stamp both dtui's version and the dtctl
-    # pkg/version vars that consumed dtctl packages read.
+    # Match `make build`: stamp dtui's version, and the same values into
+    # dtctl's pkg/version. The dtctl packages dtui links read Version only;
+    # Commit and Date are read by dtctl's own commands, which dtui does not link.
     ldflags:
       - -s -w
       - -X main.version={{ .Version }}
-      - -X github.com/dynatrace-oss/dtctl/pkg/version.Version={{ .Version }}
-      - -X github.com/dynatrace-oss/dtctl/pkg/version.Commit={{ .ShortCommit }}
-      - -X github.com/dynatrace-oss/dtctl/pkg/version.Date={{ .Date }}
+      - -X github.com/Dynatrace/dtctl/pkg/version.Version={{ .Version }}
+      - -X github.com/Dynatrace/dtctl/pkg/version.Commit={{ .ShortCommit }}
+      - -X github.com/Dynatrace/dtctl/pkg/version.Date={{ .Date }}
 
 archives:
   - id: dtui

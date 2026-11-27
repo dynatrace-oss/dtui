@@ -14,8 +14,8 @@ must be a conventional commit (`feat:`, `fix:`, `chore:`, ...).
 
 While dtui is below 1.0 (`bump-minor-pre-major`), a `feat:` bumps the minor
 version, a `fix:` bumps the patch version, and a breaking change bumps the minor
-version. `chore:`, `docs:`, `test:` and `ci:` commits alone do not trigger a
-release.
+version. `build:`, `chore:`, `docs:`, `test:` and `ci:` commits alone do not
+trigger a release.
 
 ## Cutting a release
 

@@ -7,7 +7,7 @@
 
 **A keyboard-driven terminal UI for Dynatrace.**
 
-dtui is a TUI for Dynatrace SaaS. View all your Services, Kubernetes workloads, traces, logs, SLOs right in your terminal or IDE. It is the perfect companion to [dtctl](https://github.com/dynatrace-oss/dtctl)
+dtui is a TUI for Dynatrace SaaS. View all your Services, Kubernetes workloads, traces, logs, SLOs right in your terminal or IDE. It is the perfect companion to [dtctl](https://github.com/Dynatrace/dtctl)
 
 Problems, services, Kubernetes, traces, logs, SLOs and topology, a few keystrokes apart. Think [k9s](https://k9scli.io), for observability.
 
@@ -36,7 +36,7 @@ Problems, services, Kubernetes, traces, logs, SLOs and topology, a few keystroke
 
 ## TL;DR
 
-You need [dtctl](https://github.com/dynatrace-oss/dtctl) installed, only to sign in once.
+You need [dtctl](https://github.com/Dynatrace/dtctl) installed, only to sign in once.
 
 ```bash
 # 1. Sign in once with dtctl
@@ -73,7 +73,7 @@ keyboard, from a symptom to its cause, without writing a single query.
 - **Strictly read-only.** It never creates, edits, deletes, or executes anything
   on your environment, by design ([ADR-0011](docs/adr/0011-strictly-read-only.md)).
   To act on what you found, `c` copies the equivalent
-  [dtctl](https://github.com/dynatrace-oss/dtctl) command.
+  [dtctl](https://github.com/Dynatrace/dtctl) command.
 - **Zero new auth.** It reuses your dtctl contexts and credentials, read-only.
   No tokens to paste, nothing new to secure.
 
@@ -146,10 +146,12 @@ credential store. Details in [docs/design/tui.md](docs/design/tui.md) and the
 ### 1. Prerequisites
 
 - A Dynatrace environment (Grail-enabled) you can sign in to.
-- **[dtctl](https://github.com/dynatrace-oss/dtctl) installed locally.** dtui
+- **[dtctl](https://github.com/Dynatrace/dtctl) installed locally.** dtui
   uses dtctl's Go libraries and reads its config and credential store. It never
   runs the `dtctl` binary, so you need dtctl only for the one-time sign-in below.
-  Tested against dtctl **v0.43.0**; keep yours reasonably close.
+  dtui builds against the dtctl version pinned in [`go.mod`](go.mod), which a
+  release archive lists in `third_party/licenses.csv`; keep yours reasonably
+  close to it.
 - Go 1.26 or newer, only if you build from source.
 
 ### 2. Sign in with dtctl (once)
@@ -459,7 +461,7 @@ See [docs/](docs/README.md) for the full index:
 
 ## Acknowledgements
 
-Built on [dtctl](https://github.com/dynatrace-oss/dtctl) and the
+Built on [dtctl](https://github.com/Dynatrace/dtctl) and the
 [Charm](https://charm.sh) stack (bubbletea, lipgloss, bubbles, glamour).
 Inspired by [k9s](https://k9scli.io).
 

@@ -20,4 +20,4 @@ Reports are handled on a best-effort basis; there is no guaranteed response time
 In scope: this repository's code and release binaries.
 Out of scope: vulnerabilities in Dynatrace products themselves (report those
 through Dynatrace's official channels) and in `dtctl` (report to the
-[dtctl repository](https://github.com/dynatrace-oss/dtctl)).
+[dtctl repository](https://github.com/Dynatrace/dtctl)).

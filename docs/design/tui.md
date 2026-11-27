@@ -1096,10 +1096,10 @@ Where this document describes something the code does not yet do, it is one of:
 ## References
 
 - `../dev/learnings.md` — field notes: live-validated DQL/Grail facts, the view extension model, bubbletea message-flow patterns, and how to verify the TUI
-- [dtctl ARCHITECTURE.md](https://github.com/dynatrace-oss/dtctl/blob/main/docs/dev/ARCHITECTURE.md) — prior "Interactive Mode" future idea
-- [dtctl WATCH_MODE_DESIGN.md](https://github.com/dynatrace-oss/dtctl/blob/main/docs/dev/WATCH_MODE_DESIGN.md) — existing live/watch semantics
+- [dtctl ARCHITECTURE.md](https://github.com/Dynatrace/dtctl/blob/main/docs/dev/ARCHITECTURE.md) — prior "Interactive Mode" future idea
+- [dtctl WATCH_MODE_DESIGN.md](https://github.com/Dynatrace/dtctl/blob/main/docs/dev/WATCH_MODE_DESIGN.md) — existing live/watch semantics
 - `pkg/output/progress.go`, `live.go`, `watch.go` — current live rendering
 - `pkg/output/sparkline.go`, `braille.go`, `chart.go`, `barchart.go` — reusable chart renderers
-- `pkg/safety/checker.go`, [dtctl context-safety-levels.md](https://github.com/dynatrace-oss/dtctl/blob/main/docs/dev/context-safety-levels.md) — safety model
+- `pkg/safety/checker.go`, [dtctl context-safety-levels.md](https://github.com/Dynatrace/dtctl/blob/main/docs/dev/context-safety-levels.md) — safety model
 - [dynatrace-for-ai](https://github.com/Dynatrace/dynatrace-for-ai) — skills & workflow prompts that informed the catalog and flows
 - [k9s](https://k9scli.io/) — navigation-model inspiration (aliases, hotkeys, drill-downs)

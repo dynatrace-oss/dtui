@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/dynatrace-oss/dtctl/pkg/output"
+	"github.com/Dynatrace/dtctl/pkg/output"
 )
 
 // Spark must reproduce pkg/output's MiniGraph glyph-for-glyph — it exists

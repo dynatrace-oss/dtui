@@ -10,7 +10,7 @@ import (
 	"sync"
 	"syscall/js"
 
-	"github.com/dynatrace-oss/dtctl/sdk/session"
+	"github.com/Dynatrace/dtctl/sdk/session"
 )
 
 // installJSTransport replaces the client's HTTP transport with one that hands

@@ -11,6 +11,7 @@ formatters:
     goimports:
       local-prefixes:
         - github.com/dynatrace-oss
+        - github.com/Dynatrace/dtctl
 
 linters:
   enable:

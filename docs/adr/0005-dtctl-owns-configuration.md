@@ -33,5 +33,5 @@ same cross-process refresh lock dtctl uses.
 - "Install dtctl to create contexts" is product positioning, not a runtime
   dependency (a container with a baked-in config runs dtui alone).
 - The contract is normative in the dtctl repo's
-  [CONFIG_CONTRACT.md](https://github.com/dynatrace-oss/dtctl/blob/main/docs/dev/CONFIG_CONTRACT.md), with golden
+  [CONFIG_CONTRACT.md](https://github.com/Dynatrace/dtctl/blob/main/docs/dev/CONFIG_CONTRACT.md), with golden
   fixtures both sides test against.

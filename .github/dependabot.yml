@@ -17,7 +17,7 @@ updates:
       # dtctl and dtctl/sdk must move together or the build breaks.
       dtctl:
         patterns:
-          - "github.com/dynatrace-oss/dtctl*"
+          - "github.com/Dynatrace/dtctl*"
       # Coupled rendering stack; bumps can change output.
       charmbracelet:
         patterns:

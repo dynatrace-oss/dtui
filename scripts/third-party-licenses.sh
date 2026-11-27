@@ -11,6 +11,10 @@
 set -euo pipefail
 # Same ordering locally and in CI, so the committed output can be diffed.
 export LC_ALL=C
+# Release binaries are never built in workspace mode. Under an inherited
+# workspace `go list -m` prints one line per workspace module, and the
+# inventory would describe that workspace instead of go.mod.
+export GOWORK=off
 
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 out="$repo/third_party"
@@ -86,7 +90,9 @@ awk '{print $1" "$2}' "$work/rows" | sort -u | while read -r module version; do
     [ -f "$f" ] || continue
     # dtctl's NOTICE lists dtctl's own (mostly unrelated) dependencies; only its
     # leading attribution applies to dtui and is reproduced in the root NOTICE.
-    [ "$module/$name" = "github.com/dynatrace-oss/dtctl/NOTICE" ] && continue
+    # Matched by the module's last element: a full path that went stale would
+    # skip nothing and bundle the file without an error.
+    case "$module/$name" in */dtctl/NOTICE) continue ;; esac
     files+=("$f")
     ids="$ids $(classify "$f")"
   done

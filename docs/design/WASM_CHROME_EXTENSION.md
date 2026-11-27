@@ -82,13 +82,14 @@ support.
 |--------|----------------|-----------|
 | `charmbracelet/bubbletea` | no `initInput`/`openInputTTY`/`suspendProcess`/`listenForResize`/`suspendSupported` | `wasm/patches/bubbletea_tty_wasm.go.txt` |
 | `atotto/clipboard` | `readAll`/`writeAll` undefined (platform files exclude js) | `wasm/patches/clipboard_js.go.txt` |
-| `dynatrace-oss/dtctl` (sdk) | `session/refresh_lock_unix.go` is `//go:build !windows`, so it wrongly compiles on js and needs `x/sys/unix` (Flock, …) | retag `!windows && !js` + `refresh_lock_js` stub |
-| `dynatrace-oss/dtctl` (pkg/output) | `live_{unix,windows}.go` define resize hooks for no js variant | `dtctl_output_live_js.go.txt` |
+| `Dynatrace/dtctl` (sdk) | `session/refresh_lock_unix.go` is `//go:build !windows`, so it wrongly compiles on js and needs `x/sys/unix` (Flock, …) | retag `!windows && !js` + `refresh_lock_js` stub |
+| `Dynatrace/dtctl` (pkg/output) | `live_{unix,windows}.go` define resize hooks for no js variant | `dtctl_output_live_js.go.txt` |
+| `Dynatrace/dtctl` (pkg/usage) | `lock_unix.go` is `//go:build !windows`, so it wrongly compiles on js and needs `x/sys/unix` | retag `!windows && !js` + `dtctl_usage_lock_js.go.txt` |
 
-> Note: the two dtctl gaps are **newer than the prior prototype's snapshot** — its older
-> vendored dtctl predated the OAuth refresh file-lock and the live-printer
-> resize signal, so it only needed the bubbletea + clipboard patches. This is
-> exactly the version-skew risk of forking dtctl.
+> Note: the three dtctl gaps are **newer than the prior prototype's snapshot** — its older
+> vendored dtctl predated the OAuth refresh file-lock, the live-printer
+> resize signal and the usage-ledger lock, so it only needed the bubbletea +
+> clipboard patches. This is exactly the version-skew risk of forking dtctl.
 
 `go build -overlay` can't help (it refuses replacements under `GOMODCACHE`), and
 editing go.mod `replace` directives would pollute the native build/CI. So
@@ -130,7 +131,7 @@ and never see `wasm/.deps`, so they are completely unaffected.
    scopes are ever needed; a genuinely reduced blast radius).
 2. **Binary size.** Apply the two size trims; decide whether ~7–10 MB gzipped is
    acceptable for a first load, and whether to lazy-load the wasm.
-3. **Upstreaming vs. forking.** The clean fix for the four gaps is `//go:build
+3. **Upstreaming vs. forking.** The clean fix for the five gaps is `//go:build
    js` variants **upstream** — trivial for dtctl (Dynatrace-owned) and worth a
    PR to bubbletea/clipboard. That would delete `wasm/.deps` + the scoped
    workspace entirely and let `cmd/web` build with a plain overlay-free command.

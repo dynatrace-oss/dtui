@@ -25,4 +25,4 @@ start at [AGENTS.md](../AGENTS.md).
   decisions and why they were made
 
 The shared config/credential contract is dtctl's
-[CONFIG_CONTRACT.md](https://github.com/dynatrace-oss/dtctl/blob/main/docs/dev/CONFIG_CONTRACT.md).
+[CONFIG_CONTRACT.md](https://github.com/Dynatrace/dtctl/blob/main/docs/dev/CONFIG_CONTRACT.md).

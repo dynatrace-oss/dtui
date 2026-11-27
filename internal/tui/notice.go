@@ -3,7 +3,7 @@ package tui
 import (
 	"strings"
 
-	"github.com/dynatrace-oss/dtctl/pkg/exec"
+	"github.com/Dynatrace/dtctl/pkg/exec"
 )
 
 // queryNotice is a distilled, user-facing summary of a Grail query
