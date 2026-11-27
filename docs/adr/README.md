@@ -28,6 +28,7 @@ can read in two minutes.
 | [0018](0018-launch-flags-are-a-handoff-contract.md) | Launch flags are a handoff contract; agents emit commands *(driving partially superseded by 0019)* |
 | [0019](0019-agents-may-navigate-a-listening-tui.md) | Agents may drive a TUI started with `--listen`: push pages and save personal presets over a local socket |
 | [0020](0020-last-filter-on-catalog-jumps.md) | A catalog jump restores that view's last unscoped server filter |
+| [0021](0021-repo-scope-is-dtctls-file.md) | Repo scope is dtctl's file; dtui applies it and never writes it *(proposed)* |
 
 New ADRs: next number, same three sections, `Accepted`/`Superseded` status.
 Record a decision when reversing it would ripple through more than one view.
